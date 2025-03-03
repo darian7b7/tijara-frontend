@@ -1,1 +1,0 @@
-"# Tijara Frontend" 
