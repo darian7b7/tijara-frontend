@@ -1,0 +1,158 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom base styles */
+@layer base {
+  body {
+    @apply antialiased text-gray-800 dark:text-gray-200;
+    font-family: 'Inter', 'Noto Sans Arabic', sans-serif;
+  }
+
+  html[dir="rtl"] {
+    font-family: 'Noto Sans Arabic', 'Inter', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold;
+  }
+}
+
+/* Custom components */
+@layer components {
+  .btn-primary {
+    @apply px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 
+           transition duration-200 ease-in-out focus:outline-none focus:ring-2 
+           focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 
+           transition duration-200 ease-in-out focus:outline-none focus:ring-2 
+           focus:ring-gray-400 focus:ring-offset-2 dark:focus:ring-offset-gray-800;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none 
+           focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 
+           dark:text-white;
+  }
+
+  .card {
+    @apply bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden;
+  }
+}
+
+.profile-dropdown {
+  opacity: 0; /* Initially hidden */
+  transition: opacity 0.8s ease; /* Smooth transition */
+  visibility: hidden; /* Hide by default */
+}
+
+.profile-tab .profile-dropdown {
+  visibility: visible; /* Show when toggled */
+  opacity: 1; /* Set opacity to 1 when visible */
+}
+
+/* RTL Support */
+html[dir="rtl"] {
+  /* General RTL styles */
+  direction: rtl;
+  text-align: right;
+}
+
+/* RTL Specific Styles */
+html[dir="rtl"] {
+  /* Navbar and Navigation */
+  .navbar {
+    flex-direction: row-reverse;
+  }
+  
+  /* Icons with text */
+  .icon-with-text {
+    flex-direction: row-reverse;
+  }
+  
+  /* Margins and Paddings */
+  .mr-2 {
+    margin-right: 0;
+    margin-left: 0.5rem;
+  }
+  
+  .ml-2 {
+    margin-left: 0;
+    margin-right: 0.5rem;
+  }
+  
+  /* Search bar icon */
+  .search-icon {
+    right: auto;
+    left: 1rem;
+  }
+  
+  /* Dropdown menus */
+  .dropdown-menu {
+    left: 0;
+    right: auto;
+  }
+  
+  /* Form inputs */
+  .input-field {
+    text-align: right;
+  }
+  
+  /* Buttons with icons */
+  .btn-icon {
+    flex-direction: row-reverse;
+  }
+}
+
+/* Custom utilities */
+@layer utilities {
+  .text-shadow {
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .transition-smooth {
+    @apply transition-all duration-300 ease-in-out;
+  }
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+.shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.invalid-field {
+  @apply border-red-300 bg-red-50;
+}
+
+/* Smooth transitions */
+.transition-all {
+  @apply transition-colors duration-300 ease-in-out;
+}
