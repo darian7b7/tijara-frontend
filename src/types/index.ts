@@ -51,10 +51,10 @@ export type {
   ListingParams,
   Favorite,
   ListingFilters,
-} from "@/components/listings/types/listings.ts";
+} from "@/types/listings";
 
 // Export ListingCategory enum
-export { ListingCategory } from "@/components/listings/types/listings.ts";
+export { ListingCategory } from "@/types/listings";
 
 export type {
   Message,

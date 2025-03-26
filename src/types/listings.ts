@@ -196,7 +196,34 @@ export interface VehicleDetails {
   features: string[];
 }
 
+export interface RealEstateDetails {
+  propertyType: PropertyType;
+  size: string;
+  bedrooms: string;
+  bathrooms: string;
+  features: string[];
+}
+
 export interface ListingLocation extends Location {}
+
+export interface ListingFieldSchema {
+  name: string;
+  label: string;
+  type: string;
+  options?: string[];
+  section: string;
+}
+
+export interface AdvancedDetailsFormProps {
+  initialData: FormState;
+  onSubmit: (data: FormState, isValid: boolean) => void;
+  onBack: () => void;
+}
+
+export interface Details {
+  vehicles?: VehicleDetails;
+  realEstate?: RealEstateDetails;
+}
 
 // For backward compatibility
 export type Category = ListingCategory;

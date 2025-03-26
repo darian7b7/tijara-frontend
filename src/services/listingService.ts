@@ -2,7 +2,7 @@ import axios from "axios";
 import {
   Listing,
   ListingFieldSchema,
-} from "../components/listings/types/forms";
+} from "@/types/listings";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 

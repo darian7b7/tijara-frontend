@@ -10,9 +10,9 @@ import {
   FaTree,
   FaLock,
 } from "react-icons/fa";
-import { ListingFieldSchema } from "@/types";
 import {
   FormState,
+  ListingFieldSchema,
   AdvancedDetailsFormProps,
   Category,
   Details,
@@ -25,14 +25,14 @@ interface ExtendedFormState extends FormState {
   details: Details;
 }
 
-export const AdvancedDetailsForm: React.FC<AdvancedDetailsFormProps> = ({
+const AdvancedDetailsForm: React.FC<AdvancedDetailsFormProps> = ({
   initialData,
   onSubmit,
   onBack,
 }) => {
   const { t } = useTranslation();
   const [formData, setFormData] = useState<ExtendedFormState>(
-    initialData as ExtendedFormState,
+    initialData as ExtendedFormState
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [activeSection, setActiveSection] = useState("essential");
@@ -60,7 +60,7 @@ export const AdvancedDetailsForm: React.FC<AdvancedDetailsFormProps> = ({
 
   const handleInputChange = (
     field: string,
-    value: string | number | boolean | string[],
+    value: string | number | boolean | string[]
   ) => {
     setFormData((prev) => {
       const newFormData = { ...prev };
@@ -91,7 +91,7 @@ export const AdvancedDetailsForm: React.FC<AdvancedDetailsFormProps> = ({
   const renderFields = () => {
     const fields = listingsAdvancedFieldSchema[categoryType] || [];
     const sectionFields = fields.filter(
-      (field) => field.section === activeSection,
+      (field) => field.section === activeSection
     );
 
     return (
@@ -102,7 +102,7 @@ export const AdvancedDetailsForm: React.FC<AdvancedDetailsFormProps> = ({
             name={field.name}
             label={field.label}
             type={field.type}
-            options={field.options?.map((opt) => ({ value: opt, label: opt }))}
+            options={field.options?.map((opt: string) => ({ value: opt, label: opt }))}
             value={
               isVehicle
                 ? formData.details?.vehicles?.[field.name] || ""
@@ -130,7 +130,6 @@ export const AdvancedDetailsForm: React.FC<AdvancedDetailsFormProps> = ({
         newErrors[`details.${field.name}`] = t("fieldRequired");
       }
 
-      // Additional validation for numeric fields
       if (value && field.type === "number") {
         const numValue = parseFloat(value as string);
         if (isNaN(numValue) || numValue < 0) {
@@ -146,15 +145,12 @@ export const AdvancedDetailsForm: React.FC<AdvancedDetailsFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const isFormValid = validateForm();
-    if (isFormValid) {
-      onSubmit(formData as FormState, true);
-    } else {
-      onSubmit(formData as FormState, false);
-    }
+    onSubmit(formData as FormState, isFormValid);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Section Switcher */}
       <div className="flex space-x-4 mb-6">
         {sections.map((section) => (
           <button
@@ -175,6 +171,7 @@ export const AdvancedDetailsForm: React.FC<AdvancedDetailsFormProps> = ({
 
       {renderFields()}
 
+      {/* Navigation Buttons */}
       <div className="flex justify-between mt-8">
         <button
           type="button"

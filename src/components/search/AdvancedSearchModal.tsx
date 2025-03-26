@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import type { ListingCategory } from "@/components/listings/types/listings.ts";
+import type { ListingCategory } from "@/types/listings";
 import apiClient from "@/api/apiClient";
 
 interface AdvancedSearchModalProps {

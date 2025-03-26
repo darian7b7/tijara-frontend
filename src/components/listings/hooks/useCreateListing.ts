@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ListingCategory } from "@/components/listings/types/listings.ts";
+import { ListingCategory } from "@/types/listings";
 
 interface VehicleDetails {
   make: string;

@@ -1,5 +1,5 @@
 // src/components/listings/create/advanced/listingsAdvancedFieldSchema.ts
-import { ListingFieldSchema } from "@/components/listings/types/forms";
+import { ListingFieldSchema } from "@/types/listings";
 
 export const listingsAdvancedFieldSchema: Record<string, ListingFieldSchema[]> =
   {

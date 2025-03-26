@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { clsx } from "clsx";
 import type { BaseComponentProps } from "@/types/common";
-import type { ListingCategory } from "@/components/listings/types/listings.ts";
+import type { ListingCategory } from "@/types/listings";
 import { useUI } from "@/context/UIContext";
 
 export interface Category {

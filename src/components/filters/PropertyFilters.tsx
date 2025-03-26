@@ -1,8 +1,8 @@
 import React from "react";
 import type { SelectOption } from "@/types/common";
-import { FormInput } from "@/components/listings/data/listingsData";
+import { FormInput,FormField } from "@/components/listings/create/common/FormField";
 import { useTranslation } from "react-i18next";
-import { FormField } from "@/components/listings/create/common/FormField"; // Adjust import for FormField
+ 
 
 interface PropertyFiltersProps {
   onFilterChange: (filterName: string, value: string | number) => void;
