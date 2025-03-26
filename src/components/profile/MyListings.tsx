@@ -1,60 +1,53 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslation } from "react-i18next";
-import { listingsAPI } from "@/components/listings/api/listings.api";
+import { listingsAPI } from "@/api/listings.api";
 import type { Listing } from "@/types";
 import ListingCard from "@/components/listings/details/ListingCard";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { toast } from "react-toastify";
 
-export const MyListings = () => {
+export default function MyListings() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [hasMore, setHasMore] = useState(false);
-  const [totalItems, setTotalItems] = useState(0);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const ITEMS_PER_PAGE = 9;
 
-  const fetchListings = async (page = 1) => {
+  const fetchListings = async (pageNum: number) => {
     if (!user?.id) return;
 
     try {
       setLoading(true);
-      const response = await listingsAPI.getUserListings({
-        limit: 12,
-        page,
+      const response = await listingsAPI.getUserListings({ 
+        page: pageNum, 
+        limit: ITEMS_PER_PAGE 
       });
-
-      if (page === 1) {
+      if (pageNum === 1) {
         setListings(response.items || []);
       } else {
-        setListings((prev) => [...prev, ...(response.items || [])]);
+        setListings(prev => [...prev, ...(response.items || [])]);
       }
-
-      setHasMore(response.hasMore || false);
-      setTotalItems(response.totalItems || 0);
-      setCurrentPage(page);
-      setError(null);
+      setHasMore(response.total > page * ITEMS_PER_PAGE);
     } catch (error) {
       console.error("Error fetching listings:", error);
-      setError(t("profile.fetch_error"));
       toast.error(t("profile.fetch_error"));
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchListings(page);
+  }, [page, user]);
+
   const loadMore = () => {
     if (!loading && hasMore) {
-      fetchListings(currentPage + 1);
+      setPage(prev => prev + 1);
     }
   };
-
-  useEffect(() => {
-    fetchListings(1);
-  }, [user]);
 
   const handleEditListing = (listing: Listing) => {
     window.location.href = `/listings/${listing.id}/edit`;
@@ -75,7 +68,7 @@ export const MyListings = () => {
     }
   };
 
-  if (loading && currentPage === 1) {
+  if (loading && page === 1) {
     return <LoadingSpinner />;
   }
 
@@ -83,13 +76,11 @@ export const MyListings = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-          {t("profile.my_listings")} ({totalItems})
+          {t("profile.my_listings")} ({listings.length})
         </h3>
       </div>
 
-      {error ? (
-        <div className="text-center py-8 text-red-600">{error}</div>
-      ) : listings.length === 0 ? (
+      {listings.length === 0 ? (
         <div className="text-center py-8 text-gray-600 dark:text-gray-400">
           {t("profile.no_listings")}
         </div>
@@ -122,4 +113,4 @@ export const MyListings = () => {
       )}
     </div>
   );
-};
+}

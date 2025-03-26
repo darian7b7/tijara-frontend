@@ -6,10 +6,10 @@ import {
   Listing,
   ListingCategory,
   VehicleDetails,
-} from "@/components/listings/types/listings";
+} from "@/types/listings";
 import type { ListingMessageInput } from "@/types/messaging";
 import { toast } from "react-toastify";
-import { listingsAPI } from "@/components/listings/api/listings.api";
+import { listingsAPI } from "@/api/listings.api";
 
 interface ListingDetailsProps {
   listing: Listing;
@@ -39,7 +39,7 @@ const ListingDetails: React.FC<ListingDetailsProps> = ({ listing }) => {
 
     try {
       const messageInput: ListingMessageInput = {
-        listingId: listing._id,
+        listingId: listing.id,
         content: message.trim(),
         recipientId: listing.userId,
       };
@@ -61,7 +61,7 @@ const ListingDetails: React.FC<ListingDetailsProps> = ({ listing }) => {
     }
 
     try {
-      await listingsAPI.deleteListing(listing._id);
+      await listingsAPI.deleteListing(listing.id);
       toast.success("Listing deleted successfully");
       navigate("/listings");
     } catch (error) {
@@ -77,8 +77,8 @@ const ListingDetails: React.FC<ListingDetailsProps> = ({ listing }) => {
     );
   }
 
-  const isVehicle = listing.category === ListingCategory.VEHICLES;
-  const vehicleDetails = isVehicle ? (listing.details as VehicleDetails) : null;
+  const isVehicle = listing.category.mainCategory === ListingCategory.VEHICLES;
+  const vehicleDetails = isVehicle ? (listing.details?.vehicles as VehicleDetails) : null;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -120,7 +120,9 @@ const ListingDetails: React.FC<ListingDetailsProps> = ({ listing }) => {
 
               <div className="mb-6">
                 <h2 className="text-xl font-semibold mb-2">Location</h2>
-                <p className="text-gray-600">{listing.location}</p>
+                <div>
+                  {listing.location.address}, {listing.location.city}
+                </div>
               </div>
 
               {isVehicle && vehicleDetails && (
@@ -170,7 +172,7 @@ const ListingDetails: React.FC<ListingDetailsProps> = ({ listing }) => {
                         <div>
                           <dt className="text-gray-500">Transmission</dt>
                           <dd className="font-medium">
-                            {vehicleDetails.transmission}
+                            {vehicleDetails.transmissionType}
                           </dd>
                         </div>
                         <div>

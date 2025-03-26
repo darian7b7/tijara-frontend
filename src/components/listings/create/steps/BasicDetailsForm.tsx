@@ -10,7 +10,7 @@ import {
   FuelType,
   TransmissionType,
   Condition,
-} from "../../types/listings";
+} from "@/types/listings";
 import {
   FaCar,
   FaMotorcycle,
@@ -177,7 +177,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
 
       // Find the make and model with proper capitalization
       const makeLabel = makes.find((m) => m === makeValue) || makeValue;
-      const modelLabel = models.find((m) => m === modelValue) || modelLabel;
+      const modelLabel = models.find((m) => m === modelValue) || modelValue;
 
       // Generate the title
       const autoTitle = `${makeLabel} ${modelLabel} ${yearValue}`;
@@ -348,7 +348,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
 
     // Helper function to get field value
     const getFieldValue = (fieldName: string) => {
-      return formData.details.vehicles?.[fieldName] || "";
+      return formData.details?.vehicles?.[fieldName as keyof VehicleDetails] || "";
     };
 
     // Helper function to handle field change
@@ -380,7 +380,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
             } else if (field.name === "model") {
               options = getModelOptions(makeValue);
             } else if (field.options) {
-              options = field.options.map((opt) => ({
+              options = field.options.map((opt: string) => ({
                 value: opt,
                 label: opt,
               }));
@@ -485,7 +485,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
     subCategory: VehicleType | PropertyType,
   ) => {
     // Update the category in form data
-    setFormData((prev) => {
+    setFormData((prev: any) => {
       const newData = {
         ...prev,
       category: {
@@ -900,7 +900,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
-      <form onSubmit={handleSubmit} className="space-y-6">
+     <div className="space-y-6">
         {/* Category Selection Tab */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
           <h2 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">
@@ -1112,7 +1112,11 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
 
       <div className="flex justify-end pt-6">
         <button
-            type="submit"
+            type="button"
+            onClick={() => {
+              const isValid = validateForm();
+              onSubmit(formData, isValid);
+            }}
             disabled={isSubmitting || uploadingImages}
             className={`px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${isSubmitting || uploadingImages ? "opacity-70 cursor-not-allowed" : ""}`}
           >
@@ -1126,7 +1130,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
             )}
         </button>
       </div>
-      </form>
+      </div>
 
       {/* Loading overlay */}
       {(isSubmitting || uploadingImages) && (

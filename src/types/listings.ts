@@ -1,5 +1,3 @@
-import type { ListingFieldSchema, ListingsSchemaMap, FormSection } from './forms';
-
 export enum ListingCategory {
   VEHICLES = "VEHICLES",
   REAL_ESTATE = "REAL_ESTATE"
@@ -62,6 +60,27 @@ export interface Listing {
   updatedAt: Date;
   userId: string;
   status: "ACTIVE" | "INACTIVE" | "PENDING";
+  details?: {
+    vehicles?: {
+      vehicleType: VehicleType;
+      make: string;
+      model: string;
+      year: string;
+      mileage: string;
+      fuelType: FuelType;
+      transmissionType: TransmissionType;
+      color: string;
+      condition: Condition;
+      features: string[];
+    };
+    realEstate?: {
+      propertyType: PropertyType;
+      size: string;
+      bedrooms: string;
+      bathrooms: string;
+      features: string[];
+    };
+  };
   attributes?: Record<string, string>;
   features?: string[];
 }
@@ -156,4 +175,28 @@ export interface ListingWithRelations extends Listing {
     profilePicture?: string | null;
   };
   savedBy?: Array<{ id: string; userId: string; }>;
-} 
+}
+
+export interface ListingParams extends ListingFilters {
+  page?: number;
+  limit?: number;
+  userId?: string;
+}
+
+export interface VehicleDetails {
+  vehicleType: VehicleType;
+  make: string;
+  model: string;
+  year: string;
+  mileage: string;
+  fuelType: FuelType;
+  transmissionType: TransmissionType;
+  color: string;
+  condition: Condition;
+  features: string[];
+}
+
+export interface ListingLocation extends Location {}
+
+// For backward compatibility
+export type Category = ListingCategory;

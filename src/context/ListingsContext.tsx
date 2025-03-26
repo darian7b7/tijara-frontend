@@ -1,125 +1,80 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from "react";
-import { useAuth } from "./AuthContext";
-import type { Listing } from "@/components/listings/types/listings.ts";
-import { listingsAPI } from "@/components/listings/api/listings.api";
+import React, { createContext, useContext, useState, useCallback } from 'react';
+import { listingsAPI } from '@/api/listings.api';
+import type { Listing, ListingParams, PaginatedData } from '@/types';
 
 interface ListingsContextType {
   listings: Listing[];
-  userListings: Listing[];
-  isLoading: boolean;
+  loading: boolean;
   error: string | null;
-  fetchListings: () => Promise<void>;
-  fetchUserListings: () => Promise<void>;
-  deleteListing: (id: string) => Promise<void>;
-  refetchListings: () => Promise<void>;
+  totalItems: number;
+  currentPage: number;
+  hasMore: boolean;
+  fetchListings: (params?: ListingParams) => Promise<void>;
+  clearListings: () => void;
 }
 
-interface ListingsProviderProps {
-  children: ReactNode;
-}
+const ListingsContext = createContext<ListingsContextType | undefined>(undefined);
 
-const ListingsContext = createContext<ListingsContextType | null>(null);
-
-export const ListingsProvider = ({ children }: ListingsProviderProps) => {
+export function ListingsProvider({ children }: { children: React.ReactNode }) {
   const [listings, setListings] = useState<Listing[]>([]);
-  const [userListings, setUserListings] = useState<Listing[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
+  const [totalItems, setTotalItems] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
 
-  const fetchListings = async () => {
+  const fetchListings = useCallback(async (params?: ListingParams) => {
     try {
-      setIsLoading(true);
+      setLoading(true);
       setError(null);
-      const response = await listingsAPI.getAll();
-      setListings(response.items || []);
-    } catch (error) {
-      console.error("Error fetching listings:", error);
-      setError("Failed to fetch listings");
-      setListings([]);
+      const response = await listingsAPI.getAll(params);
+      
+      if (params?.page === 1) {
+        setListings(response.items);
+      } else {
+        setListings(prev => [...prev, ...response.items]);
+      }
+      
+      setTotalItems(response.total);
+      setCurrentPage(params?.page || 1);
+      setHasMore(response.hasMore);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch listings');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  };
-
-  const fetchUserListings = async () => {
-    if (!user?.id) {
-      setError("User not authenticated");
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      const response = await listingsAPI.getUserListings();
-      setUserListings(response.items || []);
-    } catch (error) {
-      console.error("Error fetching user listings:", error);
-      setError("Failed to fetch user listings");
-      setUserListings([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const deleteListing = async (id: string) => {
-    try {
-      await listingsAPI.deleteListing(id);
-      // Update both listings and userListings
-      setListings((prev) => prev.filter((listing) => listing.id !== id));
-      setUserListings((prev) => prev.filter((listing) => listing.id !== id));
-    } catch (error) {
-      console.error("Error deleting listing:", error);
-      throw error; // Let the component handle the error
-    }
-  };
-
-  const refetchListings = async () => {
-    await Promise.all([
-      fetchListings(),
-      user?.id ? fetchUserListings() : Promise.resolve(),
-    ]);
-  };
-
-  useEffect(() => {
-    fetchListings();
   }, []);
 
-  useEffect(() => {
-    if (user) {
-      fetchUserListings();
-    } else {
-      setUserListings([]); // Clear user listings when logged out
-    }
-  }, [user]);
+  const clearListings = useCallback(() => {
+    setListings([]);
+    setTotalItems(0);
+    setCurrentPage(1);
+    setHasMore(false);
+    setError(null);
+  }, []);
 
   return (
     <ListingsContext.Provider
       value={{
         listings,
-        userListings,
-        isLoading,
+        loading,
         error,
+        totalItems,
+        currentPage,
+        hasMore,
         fetchListings,
-        fetchUserListings,
-        deleteListing,
-        refetchListings,
+        clearListings,
       }}
     >
       {children}
     </ListingsContext.Provider>
   );
-};
+}
 
-export const useListings = () => {
+export function useListings() {
   const context = useContext(ListingsContext);
-  if (!context) {
-    throw new Error("useListings must be used within a ListingsProvider");
+  if (context === undefined) {
+    throw new Error('useListings must be used within a ListingsProvider');
   }
   return context;
-};
+}

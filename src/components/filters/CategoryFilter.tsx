@@ -1,46 +1,39 @@
-import React, { useState, useEffect } from "react";
-import type { Category } from "@/components/listings/types/listings";
-import { FiltersAPI } from "@/components/listings/api/listings.api";
+import React, { useState } from "react";
+import { ListingCategory } from "@/types/listings";
 
 interface CategoryFilterProps {
-  onCategorySelect?: (category: Category) => void;
+  onCategorySelect?: (category: ListingCategory) => void;
 }
 
 const CategoryFilter: React.FC<CategoryFilterProps> = ({
   onCategorySelect,
 }) => {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
+  const categories = [ListingCategory.VEHICLES, ListingCategory.REAL_ESTATE];
+  const [selectedCategory, setSelectedCategory] = useState<ListingCategory | null>(
     null,
   );
 
-  const fetchCategories = async (): Promise<void> => {
-    try {
-      const categories = await FiltersAPI.getAllCategories();
-      setCategories(categories);
-    } catch (error) {
-      console.error("Failed to fetch categories:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  const handleCategorySelect = (category: Category) => {
+  const handleCategorySelect = (category: ListingCategory) => {
     setSelectedCategory(category);
     onCategorySelect?.(category);
+  };
+
+  const getCategoryDisplayName = (category: ListingCategory): string => {
+    return category.toLowerCase()
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   };
 
   return (
     <div className="category-filter">
       {categories.map((category) => (
         <button
-          key={category.id}
+          key={category}
           onClick={() => handleCategorySelect(category)}
-          className={`category-item ${selectedCategory?.id === category.id ? "selected" : ""}`}
+          className={`category-item ${selectedCategory === category ? "selected" : ""}`}
         >
-          {category.name}
+          {getCategoryDisplayName(category)}
         </button>
       ))}
     </div>

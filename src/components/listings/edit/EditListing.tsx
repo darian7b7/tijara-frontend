@@ -4,8 +4,8 @@ import type {
   Listing,
   ListingLocation,
   ListingUpdateInput,
-} from "@/components/listings/types/listings.ts";
-import { listingsAPI } from "@/components/listings/api/listings.api";
+} from "@/types/listings";
+import { listingsAPI } from "@/api/listings.api";
 import FormField from "@/components/listings/create/common/FormField";
 import { Button } from "@/components/ui/Button";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";

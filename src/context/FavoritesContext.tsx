@@ -6,7 +6,7 @@ import React, {
   useEffect,
 } from "react";
 import type { APIResponse } from "@/types";
-import { favoritesAPI } from "@/components/listings/api/listings.api";
+import { favoritesAPI } from "@/api/listings.api";
 import { useAuth } from "./AuthContext";
 import { toast } from "react-toastify";
 

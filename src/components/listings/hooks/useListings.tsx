@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { listingsAPI } from "@/components/listings/api/listings.api";
+import { listingsAPI } from "@/api/listings.api";
 import type {
   Listing,
   ListingParams,
-} from "@/components/listings/types/listings.ts";
-import { toast } from "@/components/ui/toast";
+} from "@/types/listings";
+import { toast } from "@/components/ui/use-toast";
 
 interface UseListingsResult {
   listings: Listing[];

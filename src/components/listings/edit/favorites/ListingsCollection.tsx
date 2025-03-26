@@ -1,63 +1,65 @@
-import React, { useEffect, useState } from "react";
-import { useFavorites } from "@/hooks";
-import { useSavedListings } from "@/context/SavedListingsContext";
+import { useEffect, useState } from "react";
+import { useFavorites } from "@/hooks/useFavorites";
+import { useSavedListings } from "@/hooks/useSavedListings";
 import ListingCard from "@/components/listings/details/ListingCard";
-import type { Listing } from "@/types";
-import { listingsAPI } from "@/components/listings/api/listings.api";
+import { Listing, PaginatedListingResponse } from "@/types/listings";
+import { listingsAPI } from "@/api/listings.api";
+import { useToast } from "@/components/ui/use-toast";
 
 interface ListingsCollectionProps {
   type: "favorites" | "saved";
 }
 
-const ListingsCollection: React.FC<ListingsCollectionProps> = ({ type }) => {
+export default function ListingsCollection({ type }: ListingsCollectionProps) {
+  const { toast } = useToast();
   const { favorites, isLoading: favoritesLoading } = useFavorites();
-  const { savedListings } = useSavedListings();
+  const { savedListings, isLoading: savedListingsLoading } = useSavedListings();
   const [listings, setListings] = useState<Listing[]>([]);
-  const [loadingListings, setLoadingListings] = useState(true);
+  const [loadingListings, setLoadingListings] = useState(false);
 
   useEffect(() => {
     const fetchListings = async () => {
-      if (type === "favorites" && !favorites.length) {
-        setListings([]);
-        setLoadingListings(false);
-        return;
-      }
-
-      if (type === "saved" && !savedListings.length) {
-        setListings([]);
-        setLoadingListings(false);
-        return;
-      }
-
       try {
-        const response =
-          type === "favorites"
-            ? await listingsAPI.getListingsByIds(favorites)
-            : { success: true, data: savedListings };
-
-        if (response.success && response.data) {
-          setListings(response.data);
+        setLoadingListings(true);
+        let listingIds: string[];
+        if (type === "favorites") {
+          listingIds = favorites;
+        } else {
+          listingIds = savedListings.map((listing: Listing) => listing.id);
+        }
+        const response: PaginatedListingResponse = await listingsAPI.getListingsByIds(listingIds);
+        if (response.data?.items) {
+          setListings(response.data.items);
         }
       } catch (error) {
         console.error(`Error fetching ${type} listings:`, error);
+        toast({
+          title: "Error",
+          description: `Failed to fetch ${type} listings`,
+          variant: "destructive",
+        });
       } finally {
         setLoadingListings(false);
       }
     };
 
-    fetchListings();
-  }, [favorites, savedListings, type]);
+    if ((type === "favorites" && favorites.length > 0) || 
+        (type === "saved" && savedListings.length > 0)) {
+      fetchListings();
+    } else {
+      setListings([]);
+      setLoadingListings(false);
+    }
+  }, [type, favorites, savedListings, toast]);
 
-  if (favoritesLoading || loadingListings) {
-    return <div className="text-center py-4">Loading {type} listings...</div>;
+  if (favoritesLoading || savedListingsLoading || loadingListings) {
+    return <div>Loading...</div>;
   }
 
-  if (!listings.length) {
+  if (listings.length === 0) {
     return (
-      <div className="text-center py-4 text-gray-600">
-        {type === "favorites"
-          ? "You haven't saved any listings to your favorites yet."
-          : "No saved listings found."}
+      <div className="text-center text-gray-500">
+        No {type} listings found
       </div>
     );
   }
@@ -65,10 +67,8 @@ const ListingsCollection: React.FC<ListingsCollectionProps> = ({ type }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {listings.map((listing) => (
-        <ListingCard key={listing._id} listing={listing} />
+        <ListingCard key={listing.id} listing={listing} />
       ))}
     </div>
   );
-};
-
-export default ListingsCollection;
+}
