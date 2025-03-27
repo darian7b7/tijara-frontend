@@ -1,10 +1,12 @@
 // 📁 src/api/apiClient.ts
-import type { AxiosInstance } from "axios";
-import axios from "axios";
-import { API_BASE_URL } from "@/config";
+import axios, { type AxiosInstance } from "axios";
 import type { APIResponse } from "@/types";
 
-// Create axios instance with base configuration
+// Use VITE_API_URL from env OR fallback to localhost
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+
+// Create axios instance
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
@@ -31,25 +33,21 @@ const serverStatus = {
   },
 };
 
-// Request interceptor
+// Attach token if available
 apiClient.interceptors.request.use(
   (config) => {
-    // Get token from storage
     const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  },
+  (error) => Promise.reject(error)
 );
 
-// Response interceptor
+// Handle errors globally
 apiClient.interceptors.response.use(
   (response) => {
-    // Update server status on successful response
     if (!serverStatus.getStatus()) {
       serverStatus.checkServerStatus();
     }
@@ -62,16 +60,14 @@ apiClient.interceptors.response.use(
       data: null,
       status: error.response?.status || 500,
     };
-
     return Promise.reject(response);
-  },
+  }
 );
 
-// Start periodic server status check
+// Auto check server health every 1 minute
 setInterval(() => {
   serverStatus.checkServerStatus();
-}, 60000); // Check every minute
+}, 60000);
 
-// Export API Instance
 export { apiClient };
 export default apiClient;

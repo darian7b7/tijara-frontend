@@ -21,7 +21,7 @@ class ServerStatusManager {
     this.checkInProgress = true;
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const timeoutId = setTimeout(() => controller.abort(), 5001);
 
       const response = await fetch(`${API_BASE_URL}/health`, {
         signal: controller.signal,

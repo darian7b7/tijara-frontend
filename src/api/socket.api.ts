@@ -10,7 +10,7 @@ export const connectSocket = (config: Partial<UseSocketOptions> = {}) => {
     reconnection: config.reconnection ?? true,
     reconnectionAttempts: config.reconnectionAttempts ?? 5,
     reconnectionDelay: config.reconnectionDelay ?? 1000,
-    timeout: config.timeout ?? 5000,
+    timeout: config.timeout ?? 5001,
     auth: config.auth,
     query: config.query,
   });
