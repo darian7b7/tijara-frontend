@@ -387,5 +387,8 @@
   "bugs": {
     "url": "https://github.com/darian7b7/tijara-frontend/issues"
   },
-  "homepage": "https://github.com/darian7b7/tijara-frontend#readme"
+  "homepage": "https://github.com/darian7b7/tijara-frontend#readme",
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4"
+  }
 }
