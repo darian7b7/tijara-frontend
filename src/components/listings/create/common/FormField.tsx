@@ -2,23 +2,14 @@ import { clsx } from "clsx";
 import { forwardRef, useCallback, useState } from "react";
 import { HexColorPicker } from "react-colorful";
 
+export type FormFieldValue = string | number | boolean | string[];
+
 export interface FormFieldProps {
   label?: string;
   name: string;
-  type?:
-    | "text"
-    | "number"
-    | "email"
-    | "password"
-    | "tel"
-    | "textarea"
-    | "select"
-    | "checkbox"
-    | "date"
-    | "multiselect"
-    | "colorpicker";
-  value?: string | number | boolean | string[];
-  onChange: (value: string | number | boolean | string[]) => void;
+  type?: "text" | "number" | "email" | "password" | "tel" | "textarea" | "select" | "checkbox" | "date" | "multiselect" | "colorpicker";
+  value?: FormFieldValue;
+  onChange: (value: FormFieldValue) => void;
   error?: string;
   helpText?: string;
   required?: boolean;
@@ -75,7 +66,7 @@ const FormField = forwardRef<
             >
           | string,
       ) => {
-        let newValue: string | number | boolean | string[] =
+        let newValue: FormFieldValue =
           typeof e === "string" ? e : e.target.value;
 
         if (type === "number") {
@@ -200,18 +191,11 @@ const FormField = forwardRef<
             value={value as string}
             onChange={handleChange}
             onBlur={handleBlur}
-            className={clsx(
-              "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",
-              error && "ring-red-300 focus:ring-red-500",
-              disabled && "bg-gray-50 text-gray-500",
-              className,
-            )}
+            className={inputClasses}
             disabled={disabled}
-            multiple={type === "multiselect"}
+            required={required}
+            multiple={Array.isArray(value)}
           >
-            {!type.includes("multi") && (
-              <option value="">{placeholder || "Select..."}</option>
-            )}
             {options.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -223,54 +207,42 @@ const FormField = forwardRef<
 
       if (type === "checkbox") {
         if (options && options.length > 0) {
-          // Render multiple checkboxes for multi-select
-          const selectedValues = (
-            Array.isArray(value) ? value : []
-          ) as string[];
           return (
             <div className="space-y-2">
               {options.map((option) => (
                 <label
                   key={option.value}
-                  className="inline-flex items-center mr-4"
+                  className="inline-flex items-center space-x-2"
                 >
                   <input
                     type="checkbox"
+                    name={name}
                     value={option.value}
-                    checked={selectedValues.includes(option.value)}
+                    checked={(value as string[])?.includes(option.value)}
                     onChange={handleChange}
-                    className={clsx(
-                      "h-4 w-4 rounded border-gray-300 text-blue-600",
-                      "focus:ring-blue-500",
-                      "disabled:opacity-50",
-                    )}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     disabled={disabled}
                   />
-                  <span className="ml-2 text-sm text-gray-700">
-                    {option.label}
-                  </span>
+                  <span className="text-sm text-gray-700">{option.label}</span>
                 </label>
               ))}
             </div>
           );
         }
-        // Single checkbox
+
         return (
           <input
             ref={ref as React.Ref<HTMLInputElement>}
-            id={name}
             type="checkbox"
+            id={name}
             name={name}
             checked={value as boolean}
             onChange={handleChange}
             onBlur={handleBlur}
             className={clsx(
-              "h-4 w-4 rounded border-gray-300 text-blue-600",
-              "focus:ring-blue-500",
-              "disabled:opacity-50",
+              "rounded border-gray-300 text-blue-600 focus:ring-blue-500",
               error && "border-red-300",
-              disabled && "bg-gray-100",
-              className,
+              disabled && "bg-gray-100 cursor-not-allowed",
             )}
             disabled={disabled}
           />
@@ -286,23 +258,20 @@ const FormField = forwardRef<
           )}
           <input
             ref={ref as React.Ref<HTMLInputElement>}
-            id={name}
             type={type}
+            id={name}
             name={name}
             value={value as string}
             onChange={handleChange}
             onBlur={handleBlur}
             className={clsx(
-              "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",
-              error && "ring-red-300 focus:ring-red-500",
-              disabled && "bg-gray-50 text-gray-500",
+              inputClasses,
               prefix && "pl-7",
-              suffix && "pr-12",
-              className,
+              suffix && "pr-7",
             )}
+            disabled={disabled}
             placeholder={placeholder}
             required={required}
-            disabled={disabled}
             min={min}
             max={max}
             step={step}
@@ -322,25 +291,28 @@ const FormField = forwardRef<
           <label
             htmlFor={name}
             className={clsx(
-              "block text-sm font-medium leading-6",
-              error ? "text-red-500" : "text-gray-900",
-              disabled && "text-gray-500",
+              "block text-sm font-medium",
+              error ? "text-red-600" : "text-gray-700",
+              disabled && "text-gray-400",
             )}
           >
             {label}
-            {required && <span className="text-red-500 ml-1">*</span>}
-            {tooltip && (
-              <span className="ml-1 text-gray-500 hover:text-gray-700">ⓘ</span>
+            {required && (
+              <span className="ml-1 text-red-500" aria-hidden="true">
+                *
+              </span>
             )}
           </label>
         )}
         {renderInput()}
+        {helpText && (
+          <p className="mt-1 text-sm text-gray-500">{helpText}</p>
+        )}
         {error && (
-          <p className="mt-1 text-sm text-red-600" id={`${name}-error`}>
+          <p className="mt-1 text-sm text-red-600" role="alert">
             {error}
           </p>
         )}
-        {helpText && <p className="mt-1 text-sm text-gray-500">{helpText}</p>}
       </div>
     );
   },

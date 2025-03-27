@@ -1,5 +1,5 @@
 // listingsFieldSchema.ts
-import { ListingFieldSchema } from "../../types/forms"; // adjust path if needed
+import { ListingFieldSchema } from "@/types/forms"; // adjust path if needed
 
 export const listingsFieldSchema: Record<string, ListingFieldSchema[]> = {
   cars: [

@@ -6,14 +6,11 @@ import { FormState, ListingCategory } from "@/types/listings";
 import {
   FaEdit,
   FaCheck,
-  FaTimes,
-  FaMapMarkerAlt,
-  FaTag,
-  FaMoneyBillWave,
   FaCar,
   FaHome,
   FaImages,
   FaHistory,
+  FaTag,
 } from "react-icons/fa";
 
 interface ReviewSectionProps {
@@ -48,14 +45,16 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({
   const handleSubmit = async () => {
     try {
       setIsSubmitting(true);
-      console.log("Submitting final form data:", formData);
-
-      // Prepare the data for API submission
-      const apiData = prepareFormDataForSubmission(formData);
-      console.log("Prepared data for API:", apiData);
+      console.log("Submitting final form data:", {
+        ...formData,
+        listingAction: listingAction,
+      });
 
       // Call the parent's onSubmit function
-      await onSubmit(apiData);
+      await onSubmit({
+        ...formData,
+        listingAction: listingAction,
+      });
 
       // Show success notification
       toast.success(t("listingCreatedSuccessfully"), {
@@ -75,46 +74,6 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({
 
       setIsSubmitting(false);
     }
-  };
-
-  // Helper function to prepare form data for API submission
-  const prepareFormDataForSubmission = (data: FormState) => {
-    // Create a copy to avoid mutating the original
-    const prepared = { ...data };
-
-    // Handle any specific transformations needed for the API
-    // For example, ensuring numeric fields are sent as numbers, not strings
-    if (prepared.price) {
-      prepared.price = Number(prepared.price);
-    }
-
-    if (prepared.category.mainCategory === ListingCategory.VEHICLES && prepared.details) {
-      // Convert string numeric values to actual numbers
-      if (prepared.details.mileage) {
-        prepared.details.mileage = Number(prepared.details.mileage);
-      }
-      if (prepared.details.year) {
-        prepared.details.year = Number(prepared.details.year);
-      }
-    }
-
-    if (prepared.category.mainCategory === ListingCategory.REAL_ESTATE && prepared.details) {
-      // Convert string numeric values to actual numbers
-      if (prepared.details.size) {
-        prepared.details.size = Number(prepared.details.size);
-      }
-      if (prepared.details.yearBuilt) {
-        prepared.details.yearBuilt = Number(prepared.details.yearBuilt);
-      }
-      if (prepared.details.bedrooms) {
-        prepared.details.bedrooms = Number(prepared.details.bedrooms);
-      }
-      if (prepared.details.bathrooms) {
-        prepared.details.bathrooms = Number(prepared.details.bathrooms);
-      }
-    }
-
-    return prepared;
   };
 
   const formatPrice = (price: string | number) => {
@@ -150,9 +109,9 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({
     </div>
   );
 
-  // Enhanced renderVehicleDetails to handle all vehicle fields
   const renderVehicleDetails = () => {
-    if (!formData.details) return null;
+    const vehicleDetails = formData.details?.vehicles;
+    if (!vehicleDetails) return null;
 
     return (
       <div className="space-y-2">
@@ -160,247 +119,158 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({
           <div>
             <div className="text-sm text-gray-500">{t("make")}</div>
             <div className="font-medium">
-              {formData.details.make || t("notProvided")}
+              {vehicleDetails.make || t("notProvided")}
             </div>
           </div>
           <div>
             <div className="text-sm text-gray-500">{t("model")}</div>
             <div className="font-medium">
-              {formData.details.model || t("notProvided")}
+              {vehicleDetails.model || t("notProvided")}
             </div>
           </div>
           <div>
             <div className="text-sm text-gray-500">{t("year")}</div>
             <div className="font-medium">
-              {formData.details.year || t("notProvided")}
+              {vehicleDetails.year || t("notProvided")}
             </div>
           </div>
           <div>
             <div className="text-sm text-gray-500">{t("vehicleType")}</div>
             <div className="font-medium">
-              {formData.details.vehicleType
-                ? t(`vehicleTypes.${formData.details.vehicleType}`)
+              {vehicleDetails.vehicleType
+                ? t(`vehicleTypes.${vehicleDetails.vehicleType}`)
                 : t("notProvided")}
             </div>
           </div>
           <div>
             <div className="text-sm text-gray-500">{t("mileage")}</div>
             <div className="font-medium">
-              {formData.details.mileage
-                ? `${formData.details.mileage} ${t("miles")}`
+              {vehicleDetails.mileage
+                ? `${vehicleDetails.mileage} ${t("miles")}`
                 : t("notProvided")}
             </div>
           </div>
           <div>
             <div className="text-sm text-gray-500">{t("fuelType")}</div>
             <div className="font-medium">
-              {formData.details.fuelType
-                ? t(`fuelTypes.${formData.details.fuelType}`)
+              {vehicleDetails.fuelType
+                ? t(`fuelTypes.${vehicleDetails.fuelType}`)
                 : t("notProvided")}
             </div>
           </div>
           <div>
-            <div className="text-sm text-gray-500">{t("transmissionType")}</div>
+            <div className="text-sm text-gray-500">{t("transmission")}</div>
             <div className="font-medium">
-              {formData.details.transmissionType
-                ? t(`transmissionTypes.${formData.details.transmissionType}`)
+              {vehicleDetails.transmission
+                ? t(`transmissionTypes.${vehicleDetails.transmission}`)
                 : t("notProvided")}
             </div>
           </div>
           <div>
             <div className="text-sm text-gray-500">{t("color")}</div>
             <div className="font-medium">
-              {formData.details.color || t("notProvided")}
+              {vehicleDetails.color || t("notProvided")}
             </div>
           </div>
           <div>
             <div className="text-sm text-gray-500">{t("condition")}</div>
             <div className="font-medium">
-              {formData.details.condition
-                ? t(`conditions.${formData.details.condition}`)
+              {vehicleDetails.condition
+                ? t(`conditions.${vehicleDetails.condition}`)
                 : t("notProvided")}
             </div>
           </div>
-        </div>
-
-        {/* Features */}
-        {formData.details.features && formData.details.features.length > 0 && (
-          <div className="mt-4">
-            <div className="text-sm text-gray-500 mb-1">{t("features")}</div>
-            <div className="flex flex-wrap gap-2">
-              {formData.details.features.map((feature, index) => (
-                <span
-                  key={index}
-                  className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full"
-                >
-                  {feature}
-                </span>
-              ))}
+          {formData.features && formData.features.length > 0 && (
+            <div className="col-span-2">
+              <div className="text-sm text-gray-500">{t("features")}</div>
+              <div className="font-medium">
+                {formData.features.join(", ")}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     );
   };
 
-  const renderRealEstateDetails = () => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-      {formData.details.realEstate?.propertyType && (
-        <div>
-          <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">
-            {t("propertyType")}
-          </h4>
-          <p className="mt-1 text-base font-medium capitalize">
-            {t(formData.details.realEstate.propertyType.toLowerCase())}
-          </p>
-        </div>
-      )}
+  const renderRealEstateDetails = () => {
+    const realEstateDetails = formData.details?.realEstate;
+    if (!realEstateDetails) return null;
 
-      {formData.details.realEstate?.size && (
-        <div>
-          <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">
-            {t("size")}
-          </h4>
-          <p className="mt-1 text-base font-medium">
-            {formData.details.realEstate.size} m²
-          </p>
-        </div>
-      )}
-
-      {formData.details.realEstate?.bedrooms && (
-        <div>
-          <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">
-            {t("bedrooms")}
-          </h4>
-          <p className="mt-1 text-base font-medium">
-            {formData.details.realEstate.bedrooms}
-          </p>
-        </div>
-      )}
-
-      {formData.details.realEstate?.bathrooms && (
-        <div>
-          <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">
-            {t("bathrooms")}
-          </h4>
-          <p className="mt-1 text-base font-medium">
-            {formData.details.realEstate.bathrooms}
-          </p>
-        </div>
-      )}
-    </div>
-  );
-
-  return (
-    <motion.div
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      variants={pageTransition}
-      className="space-y-6"
-    >
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 md:p-6 mb-6">
-        <div className="text-center py-4">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {t("reviewYourListing")}
-          </h2>
-          <p className="mt-2 text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            {t("reviewDescription")}
-          </p>
+    return (
+      <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <div className="text-sm text-gray-500">{t("propertyType")}</div>
+            <div className="font-medium">
+              {realEstateDetails.propertyType
+                ? t(`propertyTypes.${realEstateDetails.propertyType}`)
+                : t("notProvided")}
+            </div>
+          </div>
+          <div>
+            <div className="text-sm text-gray-500">{t("size")}</div>
+            <div className="font-medium">
+              {realEstateDetails.size
+                ? `${realEstateDetails.size} ${t("sqft")}`
+                : t("notProvided")}
+            </div>
+          </div>
+          <div>
+            <div className="text-sm text-gray-500">{t("yearBuilt")}</div>
+            <div className="font-medium">
+              {realEstateDetails.yearBuilt || t("notProvided")}
+            </div>
+          </div>
+          <div>
+            <div className="text-sm text-gray-500">{t("bedrooms")}</div>
+            <div className="font-medium">
+              {realEstateDetails.bedrooms || t("notProvided")}
+            </div>
+          </div>
+          <div>
+            <div className="text-sm text-gray-500">{t("bathrooms")}</div>
+            <div className="font-medium">
+              {realEstateDetails.bathrooms || t("notProvided")}
+            </div>
+          </div>
+          {formData.features && formData.features.length > 0 && (
+            <div className="col-span-2">
+              <div className="text-sm text-gray-500">{t("features")}</div>
+              <div className="font-medium">
+                {formData.features.join(", ")}
+              </div>
+            </div>
+          )}
         </div>
       </div>
+    );
+  };
 
-      {/* Basic Details */}
+  return (
+    <motion.div {...pageTransition} className="space-y-6">
+      {/* Basic Information */}
       {renderSection(
-        t("basicDetails"),
-        <FaTag className="text-blue-500" />,
-        <div className="space-y-6">
+        t("basicInformation"),
+        <FaTag className="w-5 h-5 text-blue-500" />,
+        <div className="space-y-4">
           <div>
-            <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              {t("title")}
-            </h4>
-            <p className="mt-1 text-xl font-semibold">{formData.title}</p>
+            <div className="text-sm text-gray-500">{t("title")}</div>
+            <div className="font-medium">{formData.title}</div>
           </div>
-
-          <div className="flex items-start">
-            <FaMoneyBillWave className="h-5 w-5 text-green-500 mt-1 mr-2" />
-            <div>
-              <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                {t("price")}
-              </h4>
-              <p className="mt-1 text-xl font-semibold text-green-600 dark:text-green-400">
-                {formatPrice(formData.price)}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start">
-            <FaMapMarkerAlt className="h-5 w-5 text-red-500 mt-1 mr-2" />
-            <div>
-              <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                {t("location")}
-              </h4>
-              <p className="mt-1 text-base">{formData.location}</p>
-            </div>
-          </div>
-
           <div>
-            <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              {t("description")}
-            </h4>
-            <p className="mt-1 text-base text-gray-700 dark:text-gray-300 whitespace-pre-line">
-              {formData.description}
-            </p>
+            <div className="text-sm text-gray-500">{t("description")}</div>
+            <div className="font-medium">{formData.description}</div>
           </div>
-        </div>,
-      )}
-
-      {/* Category-specific details */}
-      {renderSection(
-        formData.category.mainCategory === ListingCategory.VEHICLES
-          ? t("vehicleDetails")
-          : t("propertyDetails"),
-        formData.category.mainCategory === ListingCategory.VEHICLES ? (
-          <FaCar className="text-blue-500" />
-        ) : (
-          <FaHome className="text-green-500" />
-        ),
-        formData.category.mainCategory === ListingCategory.VEHICLES
-          ? renderVehicleDetails()
-          : renderRealEstateDetails(),
-      )}
-
-      {/* Images */}
-      {renderSection(
-        t("photos"),
-        <FaImages className="text-purple-500" />,
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {formData.images && formData.images.length > 0 ? (
-            formData.images.map((image, index) => (
-              <div
-                key={index}
-                className="relative aspect-w-4 aspect-h-3 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700"
-              >
-                <img
-                  src={
-                    typeof image === "string"
-                      ? image
-                      : URL.createObjectURL(image)
-                  }
-                  alt={`${t("image")} ${index + 1}`}
-                  className="object-cover w-full h-full"
-                  onError={(e) => {
-                    e.currentTarget.src = "/placeholder-image.jpg";
-                  }}
-                />
-              </div>
-            ))
-          ) : (
-            <p className="col-span-full text-center text-gray-500 dark:text-gray-400 py-8">
-              {t("noImages")}
-            </p>
-          )}
-        </div>,
+          <div>
+            <div className="text-sm text-gray-500">{t("price")}</div>
+            <div className="font-medium">{formatPrice(formData.price)}</div>
+          </div>
+          <div>
+            <div className="text-sm text-gray-500">{t("location")}</div>
+            <div className="font-medium">{formData.location}</div>
+          </div>
+        </div>
       )}
 
       {/* Listing Action */}
@@ -454,32 +324,66 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row justify-between gap-4 pt-6">
+      {/* Category-specific Details */}
+      {formData.category.mainCategory === ListingCategory.VEHICLES ? (
+        renderSection(
+          t("vehicleDetails"),
+          <FaCar className="w-5 h-5 text-blue-500" />,
+          renderVehicleDetails()
+        )
+      ) : (
+        renderSection(
+          t("propertyDetails"),
+          <FaHome className="w-5 h-5 text-blue-500" />,
+          renderRealEstateDetails()
+        )
+      )}
+
+      {/* Images */}
+      {renderSection(
+        t("images"),
+        <FaImages className="w-5 h-5 text-blue-500" />,
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {formData.images.map((image, index) => (
+            <div
+              key={index}
+              className="aspect-w-16 aspect-h-9 rounded-lg overflow-hidden"
+            >
+              <img
+                src={typeof image === "string" ? image : URL.createObjectURL(image)}
+                alt={`${t("image")} ${index + 1}`}
+                className="object-cover w-full h-full"
+              />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Submit Button */}
+      <div className="flex justify-between">
         <button
           type="button"
           onClick={onBack}
+          className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
           disabled={isSubmitting}
-          className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 flex-1 sm:flex-none justify-center"
         >
-          <FaTimes className="inline-block mr-2" />
           {t("back")}
         </button>
-
         <button
           type="button"
           onClick={handleSubmit}
+          className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark flex items-center space-x-2"
           disabled={isSubmitting}
-          className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 transition-colors flex-1 sm:flex-none justify-center flex items-center"
         >
           {isSubmitting ? (
             <>
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-              {t("submitting")}
+              <FaHistory className="animate-spin" />
+              <span>{t("submitting")}</span>
             </>
           ) : (
             <>
-              <FaCheck className="inline-block mr-2" />
-              {t("submitListing")}
+              <FaCheck />
+              <span>{t("submit")}</span>
             </>
           )}
         </button>

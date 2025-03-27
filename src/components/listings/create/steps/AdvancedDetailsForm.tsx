@@ -15,14 +15,19 @@ import {
   ListingFieldSchema,
   AdvancedDetailsFormProps,
   Category,
-  Details,
-} from "@/types";
+  ListingCategory,
+  VehicleDetails,
+  RealEstateDetails,
+} from "@/types/listings";
 import { listingsAdvancedFieldSchema } from "../advanced/listingsAdvancedFieldSchema";
 import FormField from "../common/FormField";
 
 interface ExtendedFormState extends FormState {
   category: Category;
-  details: Details;
+  details: {
+    vehicles?: VehicleDetails;
+    realEstate?: RealEstateDetails;
+  };
 }
 
 const AdvancedDetailsForm: React.FC<AdvancedDetailsFormProps> = ({
@@ -37,7 +42,7 @@ const AdvancedDetailsForm: React.FC<AdvancedDetailsFormProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [activeSection, setActiveSection] = useState("essential");
 
-  const isVehicle = formData.category.mainCategory === "VEHICLES";
+  const isVehicle = formData.category.mainCategory === ListingCategory.VEHICLES;
   const categoryType = isVehicle
     ? formData.category.subCategory?.toLowerCase() || "cars"
     : formData.category.subCategory?.toLowerCase() || "residential";
@@ -100,9 +105,12 @@ const AdvancedDetailsForm: React.FC<AdvancedDetailsFormProps> = ({
           <FormField
             key={field.name}
             name={field.name}
-            label={field.label}
+            label={t(field.label)}
             type={field.type}
-            options={field.options?.map((opt: string) => ({ value: opt, label: opt }))}
+            options={field.options?.map((opt: string) => ({ 
+              value: opt, 
+              label: t(`options.${opt}`)
+            }))}
             value={
               isVehicle
                 ? formData.details?.vehicles?.[field.name] || ""
@@ -145,7 +153,7 @@ const AdvancedDetailsForm: React.FC<AdvancedDetailsFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const isFormValid = validateForm();
-    onSubmit(formData as FormState, isFormValid);
+    onSubmit(formData, isFormValid);
   };
 
   return (

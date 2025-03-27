@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type {
   Listing,
-  ListingLocation,
+  Location,
   ListingUpdateInput,
 } from "@/types/listings";
 import { listingsAPI } from "@/api/listings.api";
@@ -54,7 +54,7 @@ const EditListing: React.FC = () => {
             title: response.data.title,
             description: response.data.description,
             price: response.data.price,
-            location: response.data.location as unknown as ListingLocation,
+            location: response.data.location as unknown as Location,
           });
         }
       } catch (error) {
