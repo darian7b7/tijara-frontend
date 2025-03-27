@@ -6,6 +6,7 @@ import ListingCard from "@/components/listings/details/ListingCard";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "react-toastify";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { ListingsResponse } from "@/types";
 
 const MyListings = () => {
   const { t } = useTranslation();
