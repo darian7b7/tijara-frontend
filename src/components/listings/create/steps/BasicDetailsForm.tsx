@@ -1,92 +1,90 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { motion } from "framer-motion";
 import {
-  FaCar,
-  FaTruck,
-  FaMotorcycle,
-  FaShip,
-  FaPlane,
-  FaHome,
-  FaBuilding,
-  FaWarehouse,
-} from "react-icons/fa";
-import { BiLandscape, BiBuildingHouse } from "react-icons/bi";
-import {
-  ListingCategory,
-  VehicleType,
-  PropertyType,
-  FuelType,
-  Condition,
   FormState,
+  ListingCategory,
+  PropertyType,
   VehicleDetails,
   RealEstateDetails,
-} from "../../../types/listings";
+} from "@/types/listings";
+import type { VehicleType } from "@/components/listings/data/vehicleModels";
+import {
+  FaCar,
+  FaMotorcycle,
+  FaTruck,
+  FaShuttleVan,
+  FaBus,
+  FaTractor,
+  FaTruckPickup,
+  FaMapMarkerAlt,
+  FaTag,
+  FaMoneyBillWave,
+  FaAlignLeft,
+} from "react-icons/fa";
+import { BiBuildingHouse, BiBuildings, BiLandscape } from "react-icons/bi";
+import FormField from "@/components/listings/create/common/FormField";
+import { listingsFieldSchema } from "@/components/listings/create/basic/listingsBasicFieldSchema";
 
-// Add TypeScript types for state variables
-type Errors = Record<string, string>;
-type TouchedFields = Record<string, boolean>;
-
-// Vehicle subcategories with string literals
-const vehicleSubcategories = [
-  { value: "CAR" as VehicleType, label: "Car", icon: <FaCar /> },
-  { value: "TRUCK" as VehicleType, label: "Truck", icon: <FaTruck /> },
-  { value: "MOTORCYCLE" as VehicleType, label: "Motorcycle", icon: <FaMotorcycle /> },
-  { value: "BOAT" as VehicleType, label: "Boat", icon: <FaShip /> },
-  { value: "OTHER" as VehicleType, label: "Other", icon: <FaPlane /> },
-] as const;
-
-// Property subcategories with string literals
-const propertySubcategories = [
-  { value: "HOUSE" as PropertyType, label: "House", icon: <FaHome /> },
-  { value: "APARTMENT" as PropertyType, label: "Apartment", icon: <BiBuildingHouse /> },
-  { value: "CONDO" as PropertyType, label: "Condo", icon: <FaBuilding /> },
-  { value: "LAND" as PropertyType, label: "Land", icon: <BiLandscape /> },
-  { value: "COMMERCIAL" as PropertyType, label: "Commercial", icon: <FaWarehouse /> },
-  { value: "OTHER" as PropertyType, label: "Other", icon: <FaBuilding /> },
-] as const;
-
-// Helper function to convert VehicleType string to VehicleDataType
-const getVehicleDataType = (vehicleType: string): string => {
-  const mapping: Record<string, string> = {
-    CAR: "car",
-    TRUCK: "truck",
-    MOTORCYCLE: "motorcycle",
-    BOAT: "boat",
-    OTHER: "other",
-  };
-  return mapping[vehicleType] || "car";
-};
-
-// Initial form state
-const initialFormState: FormState = {
-  title: "",
-  description: "",
-  price: "0",
-  category: {
-    mainCategory: ListingCategory.VEHICLES,
-    subCategory: "CAR" as VehicleType,
-  },
-  location: "",
-  images: [],
-  details: {
-    vehicles: {
-      vehicleType: "CAR" as VehicleType,
-      make: "",
-      model: "",
-      year: new Date().getFullYear().toString(),
-      mileage: "0",
-      fuelType: FuelType.GASOLINE,
-      condition: Condition.GOOD,
-      features: [] as string[],
-    },
-  },
-  listingAction: "sell",
-};
+// Import vehicle model data from vehicleModels file
+import {
+  getMakesForType,
+  getModelsForMakeAndType,
+  VehicleType as VehicleDataType,
+} from "../../data/vehicleModels";
 
 interface BasicDetailsFormProps {
   initialData: FormState;
   onSubmit: (data: FormState, isValid: boolean) => void;
 }
+
+interface ListingFieldSchema {
+  name: string;
+  label: string;
+  type: "text" | "number" | "select" | "textarea" | "checkbox" | "date" | "colorpicker" | "multiselect" | "email" | "password" | "tel";
+  required?: boolean;
+  options?: string[];
+  placeholder?: string;
+  min?: number;
+  max?: number;
+}
+
+// Motion animation variants - keeping them minimal for performance
+const formAnimations = { opacity: 1 };
+
+const vehicleSubcategories = [
+  { value: VehicleType.CARS, label: "Cars", icon: <FaCar /> },
+  {
+    value: VehicleType.MOTORCYCLES,
+    label: "Motorcycles",
+    icon: <FaMotorcycle />,
+  },
+  { value: VehicleType.TRUCKS, label: "Trucks", icon: <FaTruck /> },
+  { value: VehicleType.VANS, label: "Vans", icon: <FaShuttleVan /> },
+  { value: VehicleType.BUSES, label: "Buses", icon: <FaBus /> },
+  { value: VehicleType.TRACTORS, label: "Tractors", icon: <FaTractor /> },
+  {
+    value: VehicleType.CONSTRUCTION,
+    label: "Construction",
+    icon: <FaTruckPickup />,
+  },
+] as const;
+
+const realEstateSubcategories = [
+  { value: PropertyType.HOUSE, label: "Houses", icon: <BiBuildingHouse /> },
+  { value: PropertyType.APARTMENT, label: "Apartments", icon: <BiBuildings /> },
+  { value: PropertyType.LAND, label: "Land", icon: <BiLandscape /> },
+  {
+    value: PropertyType.COMMERCIAL,
+    label: "Commercial",
+    icon: <BiBuildings />,
+  },
+  {
+    value: PropertyType.INDUSTRIAL,
+    label: "Industrial",
+    icon: <BiBuildings />,
+  },
+] as const;
 
 const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
   initialData,
@@ -94,226 +92,716 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
 }) => {
   const { t } = useTranslation();
   const [formData, setFormData] = useState<FormState>({
-    ...initialFormState,
     ...initialData,
+    details: initialData.details || {
+      vehicles: undefined,
+      realEstate: undefined,
+    },
   });
-  const [errors, setErrors] = useState<Errors>({});
-  const [touched, setTouched] = useState<TouchedFields>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [uploadingImages, setUploadingImages] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Handle form field changes
-  const handleFieldChange = (
-    field: string,
-    value: string | number | boolean | string[],
-  ) => {
-    setTouched((prev) => ({ ...prev, [field]: true }));
+  // Category selection UI state
+  const [showCategorySelector, setShowCategorySelector] = useState(true);
 
-    // Handle numeric fields
-    if (field === "year" || field === "price" || field === "mileage") {
-      const numericValue = typeof value === "string" ? parseFloat(value) : Number(value);
-      if (!isNaN(numericValue)) {
-        setFormData((prev) => ({
-          ...prev,
-          [field]: numericValue.toString(),
-        }));
-      }
-      return;
-    }
+  // Add new state for make and model fields
+  const [makeValue, setMakeValue] = useState<string>("");
+  const [modelValue, setModelValue] = useState<string>("");
+  const [yearValue, setYearValue] = useState<string>(
+    new Date().getFullYear().toString(),
+  );
 
-    // Handle vehicle fields
-    if (field.startsWith("details.vehicles.")) {
-      const vehicleField = field.split(".")[2];
-      setFormData((prev) => ({
-        ...prev,
-        details: {
-          ...prev.details,
-          vehicles: {
-            ...(prev.details?.vehicles || {}),
-            [vehicleField]: value,
-          } as VehicleDetails,
-        },
-      }));
-      return;
-    }
-
-    // Handle real estate fields
-    if (field.startsWith("details.realEstate.")) {
-      const realEstateField = field.split(".")[2];
-      setFormData((prev) => ({
-        ...prev,
-        details: {
-          ...prev.details,
-          realEstate: {
-            ...(prev.details?.realEstate || {}),
-            [realEstateField]: value,
-          } as RealEstateDetails,
-        },
-      }));
-      return;
-    }
-
-    // Handle other fields
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  // Helper function to convert VehicleType enum to VehicleDataType
+  const getVehicleDataType = (vehicleType: VehicleType): VehicleDataType => {
+    const mapping = {
+      [VehicleType.CARS]: "car",
+      [VehicleType.TRUCKS]: "truck",
+      [VehicleType.BUSES]: "bus",
+      [VehicleType.VANS]: "van",
+      [VehicleType.MOTORCYCLES]: "motorcycle",
+      [VehicleType.CONSTRUCTION]: "construction",
+      [VehicleType.TRACTORS]: "tractor",
+    } as const;
+    return mapping[vehicleType] || "car";
   };
 
-  // Handle category change
+  const getBasicFieldsForSubcategory = () => {
+    if (
+      formData.category.mainCategory === ListingCategory.VEHICLES &&
+      formData.category.subCategory
+    ) {
+      return listingsFieldSchema[formData.category.subCategory] || [];
+    }
+    return [];
+  };
+
+  // Generate make options for the current vehicle type
+  const generateMakeOptions = () => {
+    if (!formData.category.subCategory) return [];
+    const makes = getMakesForType(
+      getVehicleDataType(formData.category.subCategory as VehicleType),
+    );
+    return makes.map((make) => ({ value: make, label: make }));
+  };
+
+  // Generate model options based on selected make
+  const getModelOptions = (make: string) => {
+    if (!formData.category.subCategory || !make) return [];
+    const models = getModelsForMakeAndType(
+      make,
+      getVehicleDataType(formData.category.subCategory as VehicleType),
+    );
+    return models.map((model) => ({ value: model, label: model }));
+  };
+
+  // Initialize make/model/year values from formData
+  useEffect(() => {
+    if (formData.details?.vehicles) {
+      // Set make value from form data
+      if (formData.details.vehicles.make) {
+        setMakeValue(formData.details.vehicles.make);
+      }
+
+      // Set model value from form data
+      if (formData.details.vehicles.model) {
+        setModelValue(formData.details.vehicles.model);
+      }
+
+      // Set year value from form data
+      if (formData.details.vehicles.year) {
+        setYearValue(formData.details.vehicles.year);
+      }
+    }
+  }, [
+    formData.details?.vehicles?.make,
+    formData.details?.vehicles?.model,
+    formData.details?.vehicles?.year,
+  ]);
+
+  // Effect to update title when make, model, or year changes
+  useEffect(() => {
+    if (makeValue && modelValue) {
+      // Get the selected make and model labels
+      const vehicleDataType = getVehicleDataType(
+        formData.category.subCategory as VehicleType,
+      );
+      const makes = getMakesForType(vehicleDataType);
+      const models = getModelsForMakeAndType(makeValue, vehicleDataType);
+
+      // Find the make and model with proper capitalization
+      const makeLabel = makes.find((m) => m === makeValue) || makeValue;
+      const modelLabel = models.find((m) => m === modelValue) || modelValue;
+
+      // Generate the title
+      const autoTitle = `${makeLabel} ${modelLabel} ${yearValue}`;
+
+      // Only update if title is empty or previously auto-generated
+      if (
+        autoTitle &&
+        (!formData.title ||
+          formData.title === "" ||
+          formData.title.startsWith("🚗") ||
+          formData.title.startsWith("🏠"))
+      ) {
+        handleInputChange("title", autoTitle);
+      }
+
+      // Also update the vehicle details in formData
+      if (
+        formData.category.mainCategory === ListingCategory.VEHICLES &&
+        formData.details.vehicles
+      ) {
+        setFormData((prev) => ({
+          ...prev,
+          details: {
+            ...prev.details,
+            vehicles: {
+              ...prev.details.vehicles!,
+              make: makeLabel,
+              model: modelLabel,
+              year: yearValue,
+            },
+          },
+        }));
+      }
+    }
+  }, [
+    makeValue,
+    modelValue,
+    yearValue,
+    formData.location,
+    formData.category.subCategory,
+  ]);
+
+  // Fixed handleInputChange to handle nested objects properly with type safety
+  const handleInputChange = (fieldName: string, value: any) => {
+    const fieldPath = fieldName.split(".");
+
+    setFormData((prevData) => {
+      const newData = { ...prevData };
+      let current: any = newData;
+
+      // Navigate to the nested object
+      for (let i = 0; i < fieldPath.length - 1; i++) {
+        const key = fieldPath[i];
+        if (!current[key]) {
+          current[key] = {};
+        }
+        current[key] = { ...current[key] };
+        current = current[key];
+      }
+
+      // Set the value at the final path
+      const lastKey = fieldPath[fieldPath.length - 1];
+      current[lastKey] = value;
+
+      // Special handling for vehicle details
+      if (fieldName === "category.subCategory" && value) {
+        // Initialize vehicle details if not present
+        if (!newData.details.vehicles) {
+          newData.details.vehicles = {
+            vehicleType: value,
+            make: "",
+            model: "",
+            year: new Date().getFullYear().toString(),
+            fuelType: "GASOLINE",
+            transmissionType: "AUTOMATIC",
+            condition: "GOOD",
+            features: [],
+          };
+        } else {
+          newData.details.vehicles.vehicleType = value;
+        }
+      }
+
+      return newData;
+    });
+
+    // Clear error when field is modified
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors[fieldName];
+      return newErrors;
+    });
+    setTouched((prev) => ({ ...prev, [fieldName]: true }));
+  };
+
+  // Update type definition for form field types
+  type FormFieldType = "text" | "number" | "select" | "textarea" | "checkbox" | "date" | "colorpicker" | "multiselect" | "email" | "password" | "tel";
+
+  // Fixed renderFormField to handle nested objects with proper type safety
+  const renderFormField = (
+    label: string,
+    fieldName: string,
+    type: FormFieldType = "text",
+    options?: Array<{ value: string; label: string }>,
+    icon?: React.ReactNode,
+    placeholder?: string,
+    min?: number,
+    max?: number,
+    step?: number,
+    required: boolean = true,
+    helpText?: string,
+  ) => {
+    const fieldPath = fieldName.split(".");
+
+    // Get the value from nested objects with type safety
+    let fieldValue: any = formData;
+    for (const path of fieldPath) {
+      if (fieldValue && typeof fieldValue === "object") {
+        fieldValue = fieldValue[path];
+      } else {
+        fieldValue = undefined;
+        break;
+      }
+    }
+
+    const fieldError = errors[fieldName];
+    const isTouched = touched[fieldName];
+
+    return (
+      <div className={`relative ${icon ? "pl-8" : ""}`}>
+        {icon && (
+          <div className="absolute left-0 top-8 text-gray-400">{icon}</div>
+        )}
+        <FormField
+          name={fieldName}
+          label={label}
+          type={type}
+          value={fieldValue ?? ""}
+          onChange={(value) => handleInputChange(fieldName, value)}
+          error={isTouched ? fieldError : undefined}
+          placeholder={placeholder}
+          options={options}
+          required={required}
+          min={min}
+          max={max}
+          step={step}
+          helpText={helpText}
+        />
+      </div>
+    );
+  };
+
+  const renderVehicleFields = () => {
+    if (!formData.details?.vehicles) {
+      return null;
+    }
+
+    const fields = getBasicFieldsForSubcategory();
+
+    return (
+      <div className="space-y-6">
+        {fields.map((field: ListingFieldSchema) => {
+          const fieldValue = formData.details?.vehicles?.[field.name];
+          
+          // Handle numeric values
+          let processedValue: string | number = fieldValue || "";
+          if (field.type === "number" && fieldValue) {
+            const numValue = parseFloat(fieldValue as string);
+            if (!isNaN(numValue)) {
+              processedValue = numValue;
+            }
+          }
+
+          // Get field options
+          let options = field.options;
+          if (field.name === "make") {
+            options = getMakesForType(getVehicleDataType(formData.category.subCategory as VehicleType));
+          } else if (field.name === "model" && makeValue) {
+            options = getModelsForMakeAndType(
+              makeValue,
+              getVehicleDataType(formData.category.subCategory as VehicleType)
+            );
+          }
+
+          return (
+            <FormField
+              key={field.name}
+              name={field.name}
+              label={t(field.label)}
+              type={field.type}
+              options={options?.map((opt: string) => ({
+                value: opt,
+                label: t(`options.${opt}`),
+              }))}
+              value={processedValue}
+              onChange={(value) => handleInputChange(`details.vehicles.${field.name}`, value)}
+              required={field.required}
+              placeholder={field.placeholder ? t(field.placeholder) : undefined}
+              min={field.min}
+              max={field.max}
+            />
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderRealEstateFields = () => {
+    if (formData.category.mainCategory !== ListingCategory.REAL_ESTATE) {
+      return null;
+    }
+
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-2 gap-4">
+          {renderFormField(
+            t("bedrooms"),
+            "details.realEstate.bedrooms",
+            "number",
+            undefined,
+            undefined,
+            t("enterBedrooms"),
+            0,
+          )}
+          {renderFormField(
+            t("bathrooms"),
+            "details.realEstate.bathrooms",
+            "number",
+            undefined,
+            undefined,
+            t("enterBathrooms"),
+            0,
+            undefined,
+            t("halfBathroomsAllowed"),
+          )}
+          {renderFormField(
+            t("size"),
+            "details.realEstate.size",
+            "number",
+            undefined,
+            undefined,
+            t("enterSize"),
+            0,
+          )}
+          {renderFormField(
+            t("yearBuilt"),
+            "details.realEstate.yearBuilt",
+            "number",
+            undefined,
+            undefined,
+            t("enterYearBuilt"),
+            1900,
+            new Date().getFullYear() + 1,
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderCategoryFields = () => {
+    if (!formData.details) {
+      return null;
+    }
+
+    if (formData.category.mainCategory === ListingCategory.VEHICLES) {
+      return renderVehicleFields();
+    } else if (formData.category.mainCategory === ListingCategory.REAL_ESTATE) {
+      return renderRealEstateFields();
+    }
+    return null;
+  };
+
   const handleCategoryChange = (
     mainCategory: ListingCategory,
     subCategory: VehicleType | PropertyType,
   ) => {
-    setFormData((prev) => {
-      const newData: FormState = {
+    // Update the category in form data
+    setFormData((prev: FormState) => {
+      const newData = {
         ...prev,
         category: {
           mainCategory,
           subCategory,
         },
-        details: mainCategory === ListingCategory.VEHICLES
-          ? {
-              vehicles: {
-                vehicleType: subCategory as VehicleType,
-                make: "",
-                model: "",
-                year: new Date().getFullYear().toString(),
-                mileage: "0",
-                fuelType: FuelType.GASOLINE,
-                condition: Condition.GOOD,
-                features: [] as string[],
-              },
-            }
-          : {
-              realEstate: {
-                propertyType: subCategory as PropertyType,
-                size: "0",
-                yearBuilt: new Date().getFullYear().toString(),
-                bedrooms: "0",
-                bathrooms: "0",
-                condition: Condition.GOOD,
-                features: [] as string[],
-              },
-            },
       };
+
+      // Initialize appropriate details structure based on category
+      if (mainCategory === ListingCategory.VEHICLES) {
+        newData.details = {
+          vehicles: {
+            vehicleType: subCategory as VehicleType,
+            make: "",
+            model: "",
+            year: new Date().getFullYear().toString(),
+            fuelType: "GASOLINE",
+            transmissionType: "AUTOMATIC",
+            condition: "GOOD",
+            features: [],
+          },
+        };
+      } else if (mainCategory === ListingCategory.REAL_ESTATE) {
+        newData.details = {
+          realEstate: {
+            propertyType: subCategory as PropertyType,
+            size: "",
+            yearBuilt: "",
+            bedrooms: "",
+            bathrooms: "",
+            condition: "GOOD",
+            features: [],
+          },
+        };
+      }
+
       return newData;
+    });
+
+    // Reset errors and touched state
+    setErrors({});
+    setTouched({});
+
+    // Reset make/model state
+    setMakeValue("");
+    setModelValue("");
+
+    // Show category selector
+    setShowCategorySelector(false);
+  };
+
+  const handleMakeChange = (value: string) => {
+    const newMake = value.toString();
+
+    // Update both local and form state
+    setMakeValue(newMake);
+    setModelValue("");
+
+    // Update vehicle details with type safety
+    handleInputChange("details.vehicles", {
+      ...formData.details.vehicles!,
+      make: newMake,
+      model: "",
+      vehicleType: formData.category.subCategory as VehicleType,
     });
   };
 
-  // Validate form fields with proper type checking
-  const validateField = (field: string, value: unknown): string => {
-    if (value === undefined || value === null) {
-      return t("fieldRequired");
-    }
+  const handleModelChange = (value: string) => {
+    const newModel = value.toString();
 
-    if (typeof value === "string" && !value.trim()) {
-      return t("fieldRequired");
-    }
+    // Update both local and form state
+    setModelValue(newModel);
 
-    if (field === "year" || field === "yearBuilt") {
-      const year = Number(value);
-      const currentYear = new Date().getFullYear();
-      if (isNaN(year) || year < 1900 || year > currentYear + 1) {
-        return t("invalidYear");
-      }
-    }
-
-    if (field === "price") {
-      const price = Number(value);
-      if (isNaN(price) || price <= 0) {
-        return t("invalidPrice");
-      }
-    }
-
-    if (field === "mileage") {
-      const mileage = Number(value);
-      if (isNaN(mileage) || mileage < 0) {
-        return t("invalidMileage");
-      }
-    }
-
-    return "";
+    // Update vehicle details with type safety
+    handleInputChange("details.vehicles", {
+      ...formData.details.vehicles!,
+      model: newModel,
+      vehicleType: formData.category.subCategory as VehicleType,
+    });
   };
 
-  // Enhanced validation function with proper type safety
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("Image upload started");
+
+    if (e.target.files) {
+      const fileArray = Array.from(e.target.files);
+      console.log(`Selected ${fileArray.length} files`, fileArray);
+
+      // Check file size and type
+      const validFiles = fileArray.filter((file) => {
+        const isValidType = ["image/jpeg", "image/png", "image/webp"].includes(
+          file.type,
+        );
+        const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB max
+
+        if (!isValidType) {
+          console.error(`Invalid file type: ${file.type}`);
+        }
+        if (!isValidSize) {
+          console.error(`File too large: ${file.size / (1024 * 1024)}MB`);
+        }
+
+        return isValidType && isValidSize;
+      });
+
+      if (validFiles.length < fileArray.length) {
+        // Show error message about invalid files
+        setErrors((prev) => ({
+          ...prev,
+          images:
+            "Some files were rejected. Please use JPEG or PNG images under 5MB.",
+        }));
+      }
+
+      console.log(`${validFiles.length} valid files to be added`);
+
+      // Update the form data with the new images
+      const newImages = [...formData.images, ...validFiles];
+      setFormData({
+        ...formData,
+        images: newImages,
+      });
+      console.log("Images updated in form state", newImages);
+    }
+  };
+
+  // Handle image removal function
+  const handleRemoveImage = (index: number) => {
+    const newImages = [...formData.images];
+    newImages.splice(index, 1);
+    setFormData({
+      ...formData,
+      images: newImages,
+    });
+
+    console.log(
+      `Removed image at index ${index}, ${newImages.length} images remaining`,
+    );
+  };
+
+  // Enhanced validation function to ensure all required fields are checked
   const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
+    const newErrors: { [key: string]: string } = {};
 
-    // Validate required fields
-    const requiredFields = ["title", "price", "location", "description"] as const;
-    for (const field of requiredFields) {
-      const value = formData[field];
-      const error = validateField(field, value);
-      if (error) {
-        newErrors[field] = error;
+    // Basic fields validation
+    if (!formData.title?.trim()) newErrors.title = t("fieldRequired");
+    if (!formData.description?.trim())
+      newErrors.description = t("fieldRequired");
+    if (!formData.price) {
+      newErrors.price = t("fieldRequired");
+    } else {
+      const price = parseFloat(formData.price.toString());
+      if (isNaN(price) || price <= 0) {
+        newErrors.price = t("validPriceRequired");
       }
     }
+    if (!formData.location?.trim()) newErrors.location = t("fieldRequired");
+    if (!formData.category?.mainCategory)
+      newErrors.category = t("categoryRequired");
 
-    // Validate vehicle fields
-    if (formData.category.mainCategory === ListingCategory.VEHICLES && formData.details?.vehicles) {
-      const vehicleFields = ["make", "model", "year", "mileage"] as const;
-      for (const field of vehicleFields) {
-        const value = formData.details.vehicles[field];
-        const error = validateField(field, value);
-        if (error) {
-          newErrors[`details.vehicles.${field}`] = error;
+    // Vehicle specific validation
+    if (formData.category?.mainCategory === ListingCategory.VEHICLES) {
+      const vehicles = formData.details?.vehicles;
+
+      if (!vehicles?.vehicleType) {
+        newErrors["details.vehicles.vehicleType"] = t("fieldRequired");
+      }
+
+      // Validate make
+      if (!vehicles?.make) {
+        newErrors["details.vehicles.make"] = t("fieldRequired");
+      }
+
+      // Validate custom make if "Other" is selected
+      if (vehicles?.make === "Other" && !vehicles?.customMake?.trim()) {
+        newErrors["details.vehicles.customMake"] = t("fieldRequired");
+      }
+
+      // Validate model
+      if (!vehicles?.model) {
+        newErrors["details.vehicles.model"] = t("fieldRequired");
+      }
+
+      // Validate custom model if "Custom" is selected
+      if (vehicles?.model === "Custom" && !vehicles?.customModel?.trim()) {
+        newErrors["details.vehicles.customModel"] = t("fieldRequired");
+      }
+
+      // Validate year
+      if (!vehicles?.year) {
+        newErrors["details.vehicles.year"] = t("fieldRequired");
+      } else {
+        const year = parseInt(vehicles.year as string);
+        const currentYear = new Date().getFullYear();
+        if (isNaN(year) || year < 1900 || year > currentYear + 1) {
+          newErrors["details.vehicles.year"] = t("validYearRequired");
         }
       }
     }
 
-    // Validate real estate fields
-    if (formData.category.mainCategory === ListingCategory.REAL_ESTATE && formData.details?.realEstate) {
-      const realEstateFields = ["size", "yearBuilt", "bedrooms", "bathrooms"] as const;
-      for (const field of realEstateFields) {
-        const value = formData.details.realEstate[field];
-        const error = validateField(field, value);
-        if (error) {
-          newErrors[`details.realEstate.${field}`] = error;
-        }
+    // Real estate specific validation
+    if (formData.category?.mainCategory === ListingCategory.REAL_ESTATE) {
+      const realEstate = formData.details?.realEstate;
+
+      if (!realEstate?.propertyType) {
+        newErrors["details.realEstate.propertyType"] = t("fieldRequired");
+      }
+      if (!realEstate?.size) {
+        newErrors["details.realEstate.size"] = t("fieldRequired");
+      }
+      if (!realEstate?.yearBuilt) {
+        newErrors["details.realEstate.yearBuilt"] = t("fieldRequired");
+      }
+      if (!realEstate?.bedrooms) {
+        newErrors["details.realEstate.bedrooms"] = t("fieldRequired");
+      }
+      if (!realEstate?.bathrooms) {
+        newErrors["details.realEstate.bathrooms"] = t("fieldRequired");
       }
     }
+
+    // Log for debugging
+    console.log("Validation errors:", newErrors);
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle form submission with proper type safety
+  // Enhance handleSubmit for better feedback
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const isValid = validateForm();
-    if (isValid) {
-      setIsSubmitting(true);
-      const submissionData: FormState = {
-        ...formData,
-        details: formData.category.mainCategory === ListingCategory.VEHICLES
-          ? {
-              vehicles: {
-                vehicleType: formData.category.subCategory as VehicleType,
-                make: formData.details?.vehicles?.make || "",
-                model: formData.details?.vehicles?.model || "",
-                year: formData.details?.vehicles?.year || new Date().getFullYear().toString(),
-                mileage: formData.details?.vehicles?.mileage || "0",
-                fuelType: formData.details?.vehicles?.fuelType || "gasoline",
-                condition: formData.details?.vehicles?.condition || "good",
-                features: formData.details?.vehicles?.features || [],
-              },
-            }
-          : {
-              realEstate: {
-                propertyType: formData.category.subCategory as PropertyType,
-                size: formData.details?.realEstate?.size || "0",
-                yearBuilt: formData.details?.realEstate?.yearBuilt || new Date().getFullYear().toString(),
-                bedrooms: formData.details?.realEstate?.bedrooms || "0",
-                bathrooms: formData.details?.realEstate?.bathrooms || "0",
-                condition: formData.details?.realEstate?.condition || "good",
-                features: formData.details?.realEstate?.features || [],
-              },
-            }
-      };
-      onSubmit(submissionData, isValid);
-      setIsSubmitting(false);
+
+    setIsSubmitting(true);
+
+    // Mark all fields as touched for validation display
+    const allFieldsTouched: Record<string, boolean> = {};
+
+    // Basic fields
+    const basicFields = [
+      "title",
+      "description",
+      "price",
+      "location",
+      "category",
+    ];
+    basicFields.forEach((field) => {
+      allFieldsTouched[field] = true;
+    });
+
+    // Category-specific fields
+    if (formData.category.mainCategory === ListingCategory.VEHICLES) {
+      const vehicleFields = [
+        "details.vehicles.vehicleType",
+        "details.vehicles.make",
+        "details.vehicles.model",
+        "details.vehicles.year",
+      ];
+      vehicleFields.forEach((field) => {
+        allFieldsTouched[field] = true;
+      });
+
+      // Add custom fields if needed
+      if (formData.details?.vehicles?.make === "Other") {
+        allFieldsTouched["details.vehicles.customMake"] = true;
+      }
+      if (formData.details?.vehicles?.model === "Custom") {
+        allFieldsTouched["details.vehicles.customModel"] = true;
+      }
+    } else if (formData.category.mainCategory === ListingCategory.REAL_ESTATE) {
+      allFieldsTouched["details.realEstate.propertyType"] = true;
+      allFieldsTouched["details.realEstate.size"] = true;
+      allFieldsTouched["details.realEstate.yearBuilt"] = true;
+      allFieldsTouched["details.realEstate.bedrooms"] = true;
+      allFieldsTouched["details.realEstate.bathrooms"] = true;
     }
+
+    setTouched(allFieldsTouched);
+
+    // Perform validation
+    const isValid = validateForm();
+    console.log("Form validation result:", isValid);
+
+    // Prepare the data to be submitted
+    let submissionData = { ...formData };
+
+    // Handle vehicle special cases - substitute custom values if selected
+    if (
+      formData.category.mainCategory === ListingCategory.VEHICLES &&
+      formData.details.vehicles
+    ) {
+      // If user selected "Other" make, use the custom make value
+      if (
+        formData.details.vehicles.make === "Other" &&
+        formData.details.vehicles.customMake
+      ) {
+        submissionData = {
+          ...submissionData,
+          details: {
+            ...submissionData.details,
+            vehicles: {
+              ...submissionData.details.vehicles!,
+              make: formData.details.vehicles.customMake,
+            },
+          },
+        };
+      }
+
+      // If user selected "Custom" model, use the custom model value
+      if (
+        formData.details.vehicles.model === "Custom" &&
+        formData.details.vehicles.customModel
+      ) {
+        submissionData = {
+          ...submissionData,
+          details: {
+            ...submissionData.details,
+            vehicles: {
+              ...submissionData.details.vehicles!,
+              model: formData.details.vehicles.customModel,
+            },
+          },
+        };
+      }
+    }
+
+    // Log the final submission data
+    console.log("Submitting data:", submissionData);
+
+    // Call the parent's onSubmit function with prepared data and validation status
+    onSubmit(submissionData, isValid);
+    setIsSubmitting(false);
   };
 
   const renderVehicleSelect = () => {
@@ -361,7 +849,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
           </span>
         </label>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {propertySubcategories.map((category) => (
+          {realEstateSubcategories.map((category) => (
             <button
               key={category.value}
               type="button"
@@ -390,8 +878,17 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white shadow-sm rounded-lg p-6">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="space-y-6"
+    >
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={formAnimations}
+        className="bg-white shadow-sm rounded-lg p-6"
+      >
         <div className="space-y-6">
           {/* Category Selection Tab */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
@@ -406,7 +903,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
                   onClick={() =>
                     handleCategoryChange(
                       ListingCategory.VEHICLES,
-                      "car",
+                      VehicleType.CARS,
                     )
                   }
                   className={`px-4 py-2 text-sm font-medium rounded-l-md focus:outline-none focus:z-10 ${
@@ -426,7 +923,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
                   onClick={() =>
                     handleCategoryChange(
                       ListingCategory.REAL_ESTATE,
-                      "house",
+                      PropertyType.HOUSE,
                     )
                   }
                   className={`px-4 py-2 text-sm font-medium rounded-r-md focus:outline-none focus:z-10 ${
@@ -457,89 +954,48 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
             </h2>
 
             {/* Title field with auto-generation helper text */}
-            <FormField
-              name="title"
-              label={t("title")}
-              type="text"
-              value={formData.title ?? ""}
-              onChange={(value) => handleFieldChange("title", value)}
-              error={touched.title ? errors.title : undefined}
-              placeholder={t("titlePlaceholder")}
-            />
-
-            {/* Render category-specific fields */}
-            {formData.category.mainCategory === ListingCategory.VEHICLES ? (
-              <div className="space-y-6">
-                {Object.keys(formData.details.vehicles).map((field) => (
-                  <FormField
-                    key={field}
-                    name={`details.vehicles.${field}`}
-                    label={t(`vehicles.${field}`)}
-                    type="text"
-                    value={formData.details.vehicles[field] ?? ""}
-                    onChange={(value) =>
-                      handleFieldChange(`details.vehicles.${field}`, value)
-                    }
-                    error={
-                      touched[`details.vehicles.${field}`]
-                        ? errors[`details.vehicles.${field}`]
-                        : undefined
-                    }
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {Object.keys(formData.details.realEstate).map((field) => (
-                  <FormField
-                    key={field}
-                    name={`details.realEstate.${field}`}
-                    label={t(`realEstate.${field}`)}
-                    type="text"
-                    value={formData.details.realEstate[field] ?? ""}
-                    onChange={(value) =>
-                      handleFieldChange(`details.realEstate.${field}`, value)
-                    }
-                    error={
-                      touched[`details.realEstate.${field}`]
-                        ? errors[`details.realEstate.${field}`]
-                        : undefined
-                    }
-                  />
-                ))}
-              </div>
+            {renderFormField(
+              t("title"),
+              "title",
+              "text",
+              undefined,
+              <FaTag />,
+              t("titlePlaceholder"),
+              undefined,
+              undefined,
+              makeValue && modelValue ? t("autoGeneratedFromDetails") : undefined,
             )}
 
+            {/* Render category-specific fields */}
+            {renderCategoryFields()}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-              <FormField
-                name="price"
-                label={t("price")}
-                type="number"
-                value={formData.price ?? ""}
-                onChange={(value) => handleFieldChange("price", value)}
-                error={touched.price ? errors.price : undefined}
-                placeholder={t("pricePlaceholder")}
-              />
-              <FormField
-                name="location"
-                label={t("location")}
-                type="text"
-                value={formData.location ?? ""}
-                onChange={(value) => handleFieldChange("location", value)}
-                error={touched.location ? errors.location : undefined}
-                placeholder={t("locationPlaceholder")}
-              />
+              {renderFormField(
+                t("price"),
+                "price",
+                "number",
+                undefined,
+                <FaMoneyBillWave />,
+                t("pricePlaceholder"),
+              )}
+              {renderFormField(
+                t("location"),
+                "location",
+                "text",
+                undefined,
+                <FaMapMarkerAlt />,
+                t("locationPlaceholder"),
+              )}
             </div>
 
-            <FormField
-              name="description"
-              label={t("description")}
-              type="textarea"
-              value={formData.description ?? ""}
-              onChange={(value) => handleFieldChange("description", value)}
-              error={touched.description ? errors.description : undefined}
-              placeholder={t("descriptionPlaceholder")}
-            />
+            {renderFormField(
+              t("description"),
+              "description",
+              "textarea",
+              undefined,
+              <FaAlignLeft />,
+              t("descriptionPlaceholder"),
+            )}
 
             {/* Image uploader will go here */}
             <div className="mt-6">
@@ -568,7 +1024,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
                   <div className="flex text-sm text-gray-600 dark:text-gray-400">
                     <label
                       htmlFor="file-upload"
-                      className="relative cursor-pointer rounded-md font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 focus-within:outline-none focus:ring-2 focus:ring-blue-400"
+                      className="relative cursor-pointer rounded-md font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 focus-within:outline-none"
                     >
                       <span>{t("uploadImages")}</span>
                       <input
@@ -578,63 +1034,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
                         multiple
                         accept="image/jpeg,image/png,image/webp"
                         className="sr-only"
-                        onChange={(e) => {
-                          console.log("Image upload started");
-
-                          if (e.target.files) {
-                            const fileArray = Array.from(e.target.files);
-                            console.log(
-                              `Selected ${fileArray.length} files`,
-                              fileArray,
-                            );
-
-                            // Check file size and type
-                            const validFiles = fileArray.filter((file) => {
-                              const isValidType = [
-                                "image/jpeg",
-                                "image/png",
-                                "image/webp",
-                              ].includes(file.type);
-                              const isValidSize =
-                                file.size <= 5 * 1024 * 1024; // 5MB max
-
-                              if (!isValidType) {
-                                console.error(`Invalid file type: ${file.type}`);
-                              }
-                              if (!isValidSize) {
-                                console.error(
-                                  `File too large: ${file.size / (1024 * 1024)}MB`,
-                                );
-                              }
-
-                              return isValidType && isValidSize;
-                            });
-
-                            if (validFiles.length < fileArray.length) {
-                              // Show error message about invalid files
-                              setErrors((prev) => ({
-                                ...prev,
-                                images:
-                                  "Some files were rejected. Please use JPEG or PNG images under 5MB.",
-                              }));
-                            }
-
-                            console.log(
-                              `${validFiles.length} valid files to be added`,
-                            );
-
-                            // Update the form data with the new images
-                            const newImages = [
-                              ...formData.images,
-                              ...validFiles,
-                            ];
-                            setFormData({
-                              ...formData,
-                              images: newImages,
-                            });
-                            console.log("Images updated in form state", newImages);
-                          }
-                        }}
+                        onChange={handleImageUpload}
                       />
                     </label>
                     <p className="pl-1">{t("dragAndDrop")}</p>
@@ -673,17 +1073,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
                         <button
                           type="button"
                           className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400"
-                          onClick={() => {
-                            const newImages = [...formData.images];
-                            newImages.splice(index, 1);
-                            setFormData({
-                              ...formData,
-                              images: newImages,
-                            });
-                            console.log(
-                              `Removed image at index ${index}, ${newImages.length} images remaining`,
-                            );
-                          }}
+                          onClick={() => handleRemoveImage(index)}
                           aria-label={t("removeImage")}
                         >
                           <svg
@@ -713,15 +1103,12 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
         <div className="flex justify-end pt-6">
           <button
             type="button"
-            onClick={(e) => {
-              handleSubmit(e);
+            onClick={() => {
+              const isValid = validateForm();
+              onSubmit(formData, isValid);
             }}
             disabled={isSubmitting || uploadingImages}
-            className={`px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-              isSubmitting || uploadingImages
-                ? "opacity-70 cursor-not-allowed"
-                : ""
-            }`}
+            className={`px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${isSubmitting || uploadingImages ? "opacity-70 cursor-not-allowed" : ""}`}
           >
             {isSubmitting ? (
               <div className="flex items-center justify-center">
@@ -733,7 +1120,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
             )}
           </button>
         </div>
-      </div>
+      </motion.div>
 
       {/* Loading overlay */}
       {(isSubmitting || uploadingImages) && (
@@ -744,7 +1131,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 };
 
