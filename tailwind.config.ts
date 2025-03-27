@@ -75,12 +75,12 @@ const animations = {
   },
 };
 
-import plugin from "@tailwindcss/forms";
-import typography from "@tailwindcss/typography";
-import aspectRatio from "@tailwindcss/aspect-ratio";
-
 const config: Config = {
-  content: ["./index.html", "./src/**/*.{js,jsx,ts,tsx}"],
+  content: [
+    "./index.html",
+    "./src/**/*.{js,jsx,ts,tsx}",
+    "./src/**/*.{html,js,ts,tsx}",
+  ],
   darkMode: "class",
   theme: {
     screens,
@@ -102,7 +102,11 @@ const config: Config = {
       ...animations,
     },
   },
-  plugins: [plugin, aspectRatio, typography],
+  plugins: [
+    require("@tailwindcss/forms"),
+    require("@tailwindcss/typography"),
+    require("@tailwindcss/aspect-ratio"),
+  ],
 };
 
 export default config;
