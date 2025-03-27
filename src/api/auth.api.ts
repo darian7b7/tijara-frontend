@@ -138,7 +138,7 @@ export class TokenManager {
 export class AuthAPI {
   static async login(email: string, password: string): Promise<APIResponse<AuthResponse>> {
     try {
-      const response = await apiClient.post<APIResponse<AuthResponse>>('/auth/login', {
+      const response = await apiClient.post<APIResponse<AuthResponse>>('/api/auth/login', {
         email,
         password,
       });
@@ -165,7 +165,7 @@ export class AuthAPI {
     name: string,
   ): Promise<APIResponse<AuthResponse>> {
     try {
-      const response = await apiClient.post<APIResponse<AuthResponse>>('/auth/register', {
+      const response = await apiClient.post<APIResponse<AuthResponse>>('/api/auth/register', {
         email,
         password,
         name,
@@ -188,7 +188,7 @@ export class AuthAPI {
 
   static async logout(): Promise<APIResponse<void>> {
     try {
-      await apiClient.post("/auth/logout");
+      await apiClient.post("/api/auth/logout");
       TokenManager.clearTokens();
       return {
         success: true,
@@ -213,7 +213,7 @@ export class AuthAPI {
       }
 
       const response = await apiClient.post<APIResponse<AuthResponse>>(
-        "/auth/refresh",
+        "/api/auth/refresh",
         { refreshToken: tokens.refreshToken },
       );
 
@@ -235,7 +235,7 @@ export class AuthAPI {
 
   static async getCurrentUser(): Promise<APIResponse<AuthResponse>> {
     try {
-      const response = await apiClient.get<APIResponse<AuthResponse>>("/auth/me");
+      const response = await apiClient.get<APIResponse<AuthResponse>>("/api/auth/me");
       return response.data;
     } catch (error: any) {
       const errorResponse: APIResponse<AuthResponse> = {
