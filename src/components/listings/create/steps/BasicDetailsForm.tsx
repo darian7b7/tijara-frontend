@@ -8,7 +8,11 @@ import {
   VehicleDetails,
   RealEstateDetails,
 } from "@/types/listings";
-import type { VehicleType } from "@/components/listings/data/vehicleModels";
+import {
+  getMakesForType,
+  getModelsForMakeAndType,
+  VehicleType,
+} from "@/components/listings/data/vehicleModels";
 import {
   FaCar,
   FaMotorcycle,
@@ -26,13 +30,7 @@ import { BiBuildingHouse, BiBuildings, BiLandscape } from "react-icons/bi";
 import FormField from "@/components/listings/create/common/FormField";
 import { listingsFieldSchema } from "@/components/listings/create/basic/listingsBasicFieldSchema";
 
-// Import vehicle model data from vehicleModels file
-import {
-  getMakesForType,
-  getModelsForMakeAndType,
-  VehicleType as VehicleDataType,
-} from "../../data/vehicleModels";
-
+// Define interfaces
 interface BasicDetailsFormProps {
   initialData: FormState;
   onSubmit: (data: FormState, isValid: boolean) => void;
@@ -49,41 +47,27 @@ interface ListingFieldSchema {
   max?: number;
 }
 
-// Motion animation variants - keeping them minimal for performance
+// Motion animation variants
 const formAnimations = { opacity: 1 };
 
+// Vehicle subcategories with proper type safety
 const vehicleSubcategories = [
   { value: VehicleType.CARS, label: "Cars", icon: <FaCar /> },
-  {
-    value: VehicleType.MOTORCYCLES,
-    label: "Motorcycles",
-    icon: <FaMotorcycle />,
-  },
+  { value: VehicleType.MOTORCYCLES, label: "Motorcycles", icon: <FaMotorcycle /> },
   { value: VehicleType.TRUCKS, label: "Trucks", icon: <FaTruck /> },
   { value: VehicleType.VANS, label: "Vans", icon: <FaShuttleVan /> },
   { value: VehicleType.BUSES, label: "Buses", icon: <FaBus /> },
   { value: VehicleType.TRACTORS, label: "Tractors", icon: <FaTractor /> },
-  {
-    value: VehicleType.CONSTRUCTION,
-    label: "Construction",
-    icon: <FaTruckPickup />,
-  },
+  { value: VehicleType.CONSTRUCTION, label: "Construction", icon: <FaTruckPickup /> },
 ] as const;
 
+// Real estate subcategories with proper type safety
 const realEstateSubcategories = [
   { value: PropertyType.HOUSE, label: "Houses", icon: <BiBuildingHouse /> },
   { value: PropertyType.APARTMENT, label: "Apartments", icon: <BiBuildings /> },
   { value: PropertyType.LAND, label: "Land", icon: <BiLandscape /> },
-  {
-    value: PropertyType.COMMERCIAL,
-    label: "Commercial",
-    icon: <BiBuildings />,
-  },
-  {
-    value: PropertyType.INDUSTRIAL,
-    label: "Industrial",
-    icon: <BiBuildings />,
-  },
+  { value: PropertyType.COMMERCIAL, label: "Commercial", icon: <BiBuildings /> },
+  { value: PropertyType.INDUSTRIAL, label: "Industrial", icon: <BiBuildings /> },
 ] as const;
 
 const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
@@ -114,7 +98,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
   );
 
   // Helper function to convert VehicleType enum to VehicleDataType
-  const getVehicleDataType = (vehicleType: VehicleType): VehicleDataType => {
+  const getVehicleDataType = (vehicleType: VehicleType): string => {
     const mapping = {
       [VehicleType.CARS]: "car",
       [VehicleType.TRUCKS]: "truck",
