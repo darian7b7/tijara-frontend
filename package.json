@@ -386,6 +386,7 @@
   },
   "homepage": "https://github.com/darian7b7/tijara-frontend#readme",
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.17",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.3",
