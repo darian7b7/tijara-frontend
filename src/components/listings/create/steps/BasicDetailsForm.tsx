@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
+import FormField from "@/components/listings/create/common/FormField";
 import {
-  FormState,
   ListingCategory,
-  PropertyType,
-  VehicleDetails,
-  RealEstateDetails,
+  type VehicleType,
+  type PropertyType,
+  type FormState,
+  type VehicleDetails,
+  type RealEstateDetails,
 } from "@/types/listings";
-import type { VehicleType } from "@/components/listings/data/vehicleModels";
+import {
+  getVehicleDataType,
+  getMakesForType,
+  getModelsForMakeAndType,
+} from "@/components/listings/data/vehicleModels";
 import {
   FaCar,
   FaMotorcycle,
@@ -23,31 +29,16 @@ import {
   FaAlignLeft,
 } from "react-icons/fa";
 import { BiBuildingHouse, BiBuildings, BiLandscape } from "react-icons/bi";
-import FormField from "@/components/listings/create/common/FormField";
 import { listingsFieldSchema } from "@/components/listings/create/basic/listingsBasicFieldSchema";
-
-// Import vehicle model data from vehicleModels file
-import {
-  getMakesForType,
-  getModelsForMakeAndType,
-  VehicleType as VehicleDataType,
-} from "../../data/vehicleModels";
 
 interface BasicDetailsFormProps {
   initialData: FormState;
   onSubmit: (data: FormState, isValid: boolean) => void;
 }
 
-interface ListingFieldSchema {
-  name: string;
-  label: string;
-  type: "text" | "number" | "select" | "textarea" | "checkbox" | "date" | "colorpicker" | "multiselect" | "email" | "password" | "tel";
-  required?: boolean;
-  options?: string[];
-  placeholder?: string;
-  min?: number;
-  max?: number;
-}
+// Add TypeScript types for state variables
+type Errors = Record<string, string>;
+type TouchedFields = Record<string, boolean>;
 
 // Motion animation variants - keeping them minimal for performance
 const formAnimations = { opacity: 1 };
@@ -98,8 +89,8 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
       realEstate: undefined,
     },
   });
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [errors, setErrors] = useState<Errors>({});
+  const [touched, setTouched] = useState<TouchedFields>({});
   const [uploadingImages, setUploadingImages] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -114,7 +105,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
   );
 
   // Helper function to convert VehicleType enum to VehicleDataType
-  const getVehicleDataType = (vehicleType: VehicleType): VehicleDataType => {
+  const getVehicleDataType = (vehicleType: VehicleType): string => {
     const mapping = {
       [VehicleType.CARS]: "car",
       [VehicleType.TRUCKS]: "truck",
@@ -265,7 +256,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
             vehicleType: value,
             make: "",
             model: "",
-            year: new Date().getFullYear().toString(),
+            year: new Date().getFullYear(),
             fuelType: "GASOLINE",
             transmissionType: "AUTOMATIC",
             condition: "GOOD",
@@ -354,7 +345,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
 
     return (
       <div className="space-y-6">
-        {fields.map((field: ListingFieldSchema) => {
+        {fields.map((field: any) => {
           const fieldValue = formData.details?.vehicles?.[field.name];
           
           // Handle numeric values and ensure proper type
@@ -708,7 +699,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
     setIsSubmitting(true);
 
     // Mark all fields as touched for validation display
-    const allFieldsTouched: Record<string, boolean> = {};
+    const allFieldsTouched: TouchedFields = {};
 
     // Basic fields
     const basicFields = [
