@@ -189,6 +189,7 @@ export class AuthAPI {
   static async logout(): Promise<APIResponse<void>> {
     try {
       await apiClient.post("/auth/logout");
+      TokenManager.clearTokens();
       return {
         success: true,
         status: 200,
@@ -201,8 +202,6 @@ export class AuthAPI {
         status: 500,
         data: null
       };
-    } finally {
-      TokenManager.clearTokens();
     }
   }
 
