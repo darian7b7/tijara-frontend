@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ListingsResponse, Listing } from "@/types/listings";
+import { ListingResponse, Listing } from "@/types/listings";
 import apiClient from "@/api/apiClient";
-import ListingCard from "@/components/listings/common/ListingCard";
+import ListingCard from "@/components/listings/details/ListingCard";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "react-toastify";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
