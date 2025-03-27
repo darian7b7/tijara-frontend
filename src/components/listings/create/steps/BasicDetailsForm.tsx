@@ -350,16 +350,34 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
       return null;
     }
 
-    const vehicleType = formData.category.subCategory as VehicleType;
     const fields = getBasicFieldsForSubcategory();
 
     return (
       <div className="space-y-6">
         {fields.map((field: ListingFieldSchema) => {
           const fieldValue = formData.details?.vehicles?.[field.name];
-          const numericValue = field.type === "number" && fieldValue 
-            ? parseFloat(fieldValue as string) 
-            : fieldValue;
+          
+          // Handle numeric values and ensure proper type
+          let processedValue: string | number = "";
+          if (fieldValue) {
+            if (field.type === "number") {
+              const numValue = parseFloat(fieldValue as string);
+              processedValue = !isNaN(numValue) ? numValue : "";
+            } else {
+              processedValue = fieldValue.toString();
+            }
+          }
+
+          // Get field options
+          let options = field.options;
+          if (field.name === "make") {
+            options = getMakesForType(getVehicleDataType(formData.category.subCategory as VehicleType));
+          } else if (field.name === "model" && makeValue) {
+            options = getModelsForMakeAndType(
+              makeValue,
+              getVehicleDataType(formData.category.subCategory as VehicleType)
+            );
+          }
 
           return (
             <FormField
@@ -367,11 +385,11 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
               name={field.name}
               label={t(field.label)}
               type={field.type}
-              options={field.options?.map((opt: string) => ({
+              options={options?.map((opt: string) => ({
                 value: opt,
                 label: t(`options.${opt}`),
               }))}
-              value={numericValue || ""}
+              value={processedValue}
               onChange={(value) => handleInputChange(`details.vehicles.${field.name}`, value)}
               required={field.required}
               placeholder={field.placeholder ? t(field.placeholder) : undefined}
@@ -470,7 +488,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
             vehicleType: subCategory as VehicleType,
             make: "",
             model: "",
-            year: new Date().getFullYear().toString(),
+            year: new Date().getFullYear(),
             fuelType: "GASOLINE",
             transmissionType: "AUTOMATIC",
             condition: "GOOD",
@@ -755,7 +773,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
           details: {
             ...submissionData.details,
             vehicles: {
-              ...submissionData.details.vehicles,
+              ...submissionData.details.vehicles!,
               make: formData.details.vehicles.customMake,
             },
           },
@@ -772,7 +790,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
           details: {
             ...submissionData.details,
             vehicles: {
-              ...submissionData.details.vehicles,
+              ...submissionData.details.vehicles!,
               model: formData.details.vehicles.customModel,
             },
           },
