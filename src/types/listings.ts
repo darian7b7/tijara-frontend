@@ -1,6 +1,5 @@
 // Import vehicle models data and types
-import type { VehicleType, ModelData, VehicleDataStructure } from "@/components/listings/data/vehicleModels";
-import { getMakesForType, getModelsForMakeAndType, searchMakesForType, searchModelsForMakeAndType } from "@/components/listings/data/vehicleModels";
+import type { VehicleType } from "@/components/listings/data/vehicleModels";
 
 export enum ListingCategory {
   VEHICLES = 'VEHICLES',
@@ -77,7 +76,8 @@ export interface VehicleDetails {
   seatVentilation?: string;
   seatMemory?: boolean;
   steeringAdjustment?: string;
-  [key: string]: string | number | boolean | undefined;
+  features?: string[];
+  [key: string]: string | number | boolean | undefined | string[];
 }
 
 export interface RealEstateDetails {
@@ -235,5 +235,39 @@ export interface Details {
   realEstate?: RealEstateDetails;
 }
 
-// For backward compatibility
-export type Category = ListingCategory;
+export interface PriceRange {
+  min: number;
+  max: number;
+}
+
+export interface FilterParams {
+  category?: ListingCategory;
+  priceRange?: PriceRange;
+  location?: string;
+  [key: string]: any;
+}
+
+export interface FilterResponse {
+  success: boolean;
+  data: {
+    listings: Listing[];
+    total: number;
+    filters: {
+      categories: string[];
+      locations: string[];
+      priceRanges: PriceRange[];
+    };
+  };
+  error?: string;
+}
+
+export interface Favorite {
+  id: string;
+  userId: string;
+  listingId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Re-export VehicleType
+export type { VehicleType } from "@/components/listings/data/vehicleModels";

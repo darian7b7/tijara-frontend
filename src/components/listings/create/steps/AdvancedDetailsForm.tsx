@@ -30,6 +30,9 @@ interface ExtendedFormState extends FormState {
   };
 }
 
+// Update type definition for form field types
+type FormFieldType = "text" | "number" | "select" | "textarea" | "checkbox" | "date" | "colorpicker" | "multiselect" | "email" | "password" | "tel";
+
 const AdvancedDetailsForm: React.FC<AdvancedDetailsFormProps> = ({
   initialData,
   onSubmit,
@@ -41,6 +44,7 @@ const AdvancedDetailsForm: React.FC<AdvancedDetailsFormProps> = ({
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [activeSection, setActiveSection] = useState("essential");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isVehicle = formData.category.mainCategory === ListingCategory.VEHICLES;
   const categoryType = isVehicle
@@ -69,9 +73,8 @@ const AdvancedDetailsForm: React.FC<AdvancedDetailsFormProps> = ({
   ) => {
     setFormData((prev) => {
       const newFormData = { ...prev };
-      const category = prev.category.mainCategory.toLowerCase();
 
-      if (category === "vehicles" && prev.details?.vehicles) {
+      if (isVehicle && prev.details?.vehicles) {
         newFormData.details = {
           ...prev.details,
           vehicles: {
@@ -79,7 +82,7 @@ const AdvancedDetailsForm: React.FC<AdvancedDetailsFormProps> = ({
             [field]: value,
           },
         };
-      } else if (category === "real_estate" && prev.details?.realEstate) {
+      } else if (!isVehicle && prev.details?.realEstate) {
         newFormData.details = {
           ...prev.details,
           realEstate: {
@@ -106,10 +109,10 @@ const AdvancedDetailsForm: React.FC<AdvancedDetailsFormProps> = ({
             key={field.name}
             name={field.name}
             label={t(field.label)}
-            type={field.type}
-            options={field.options?.map((opt: string) => ({ 
-              value: opt, 
-              label: t(`options.${opt}`)
+            type={field.type as FormFieldType}
+            options={field.options?.map((opt: string) => ({
+              value: opt,
+              label: t(`options.${opt}`),
             }))}
             value={
               isVehicle
@@ -119,6 +122,8 @@ const AdvancedDetailsForm: React.FC<AdvancedDetailsFormProps> = ({
             onChange={(value) => handleInputChange(field.name, value)}
             error={errors[`details.${field.name}`]}
             required={field.required}
+            disabled={isSubmitting}
+            className={errors[`details.${field.name}`] ? "border-red-500" : ""}
           />
         ))}
       </div>
@@ -126,7 +131,7 @@ const AdvancedDetailsForm: React.FC<AdvancedDetailsFormProps> = ({
   };
 
   const validateForm = (): boolean => {
-    const newErrors: { [key: string]: string } = {};
+    const newErrors: Record<string, string> = {};
     const fields = listingsAdvancedFieldSchema[categoryType] || [];
 
     fields.forEach((field) => {
@@ -134,15 +139,23 @@ const AdvancedDetailsForm: React.FC<AdvancedDetailsFormProps> = ({
         ? formData.details?.vehicles?.[field.name]
         : formData.details?.realEstate?.[field.name];
 
-      if (field.required && !value) {
+      if (field.required && (!value || value === "")) {
         newErrors[`details.${field.name}`] = t("fieldRequired");
       }
 
       if (value && field.type === "number") {
         const numValue = parseFloat(value as string);
-        if (isNaN(numValue) || numValue < 0) {
+        if (
+          isNaN(numValue) ||
+          (field.min && numValue < field.min) ||
+          (field.max && numValue > field.max)
+        ) {
           newErrors[`details.${field.name}`] = t("invalidNumber");
         }
+      }
+
+      if (value && field.type === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        newErrors[`details.${field.name}`] = t("invalidEmail");
       }
     });
 
@@ -150,26 +163,32 @@ const AdvancedDetailsForm: React.FC<AdvancedDetailsFormProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const isFormValid = validateForm();
-    onSubmit(formData, isFormValid);
+    setIsSubmitting(true);
+
+    const isValid = validateForm();
+    if (isValid) {
+      onSubmit(formData, true);
+    } else {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Section Switcher */}
       <div className="flex space-x-4 mb-6">
         {sections.map((section) => (
           <button
             key={section.id}
             type="button"
             onClick={() => setActiveSection(section.id)}
+            disabled={isSubmitting}
             className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
               activeSection === section.id
                 ? "bg-primary text-white"
                 : "bg-gray-100 hover:bg-gray-200"
-            }`}
+            } ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             {React.createElement(section.icon, { className: "w-5 h-5" })}
             <span>{section.title}</span>
@@ -179,20 +198,21 @@ const AdvancedDetailsForm: React.FC<AdvancedDetailsFormProps> = ({
 
       {renderFields()}
 
-      {/* Navigation Buttons */}
       <div className="flex justify-between mt-8">
         <button
           type="button"
           onClick={onBack}
-          className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+          disabled={isSubmitting}
+          className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {t("back")}
         </button>
         <button
           type="submit"
-          className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark"
+          disabled={isSubmitting}
+          className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {t("continue")}
+          {isSubmitting ? t("submitting") : t("continue")}
         </button>
       </div>
     </form>

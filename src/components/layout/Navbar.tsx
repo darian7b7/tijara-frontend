@@ -5,7 +5,6 @@ import { useAuth } from "@/context/AuthContext";
 import { useUI } from "@/context/UIContext";
 import { SearchBar, Tooltip } from "@/components/ui";
 import NotificationBell from "@/components/notifications/NotificationBell";
-import { ListingCategory } from "@/types";
 import {
   FaUser,
   FaCog,

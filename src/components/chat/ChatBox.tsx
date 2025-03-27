@@ -41,7 +41,7 @@ export function ChatBox({
   };
 
   const otherUser = conversation.participants.find(
-    (user) => user._id !== currentUserId,
+    (user) => user.id !== currentUserId,
   ) as User;
 
   return (
@@ -49,21 +49,20 @@ export function ChatBox({
       <div className="flex items-center p-4 border-b">
         <img
           src={otherUser.profilePicture || "/default-avatar.png"}
-          alt={otherUser.name}
+          alt={otherUser.username}
           className="w-10 h-10 rounded-full"
         />
         <div className="ml-3">
-          <h3 className="font-semibold">{otherUser.name}</h3>
-          <p className="text-sm text-gray-500">{otherUser.username}</p>
+          <h3 className="font-medium text-gray-900">{otherUser.username}</h3>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4">
         {messages.map((message) => {
-          const isCurrentUser = message.sender._id === currentUserId;
+          const isCurrentUser = message.senderId === currentUserId;
           return (
             <div
-              key={message._id}
+              key={message.id}
               className={`flex mb-4 ${
                 isCurrentUser ? "justify-end" : "justify-start"
               }`}

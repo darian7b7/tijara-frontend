@@ -22,7 +22,6 @@ export interface FormFieldProps {
   step?: number;
   prefix?: string;
   suffix?: string;
-  tooltip?: string;
   validateOnBlur?: boolean;
   customValidation?: (value: string) => string | undefined;
 }
@@ -50,7 +49,6 @@ const FormField = forwardRef<
       options = [],
       prefix,
       suffix,
-      tooltip,
       validateOnBlur = true,
       customValidation,
     },

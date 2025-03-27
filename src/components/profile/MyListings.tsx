@@ -7,7 +7,7 @@ import ListingCard from "@/components/listings/details/ListingCard";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { toast } from "react-toastify";
 
-export default function MyListings() {
+export function MyListings() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [listings, setListings] = useState<Listing[]>([]);

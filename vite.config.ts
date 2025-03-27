@@ -1,13 +1,24 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import path from 'path';
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import path from "path";
 import { fileURLToPath } from "url";
+import tailwindcss from 'tailwindcss';
+import autoprefixer from 'autoprefixer';
 
-// Ensure __dirname works correctly with ESM
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// Polyfill __dirname for ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export default defineConfig({
   plugins: [react()],
+  css: {
+    postcss: {
+      plugins: [
+        tailwindcss(),
+        autoprefixer(),
+      ],
+    },
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
@@ -26,6 +37,12 @@ export default defineConfig({
     port: 3000,
     open: true,
     strictPort: false,
+    cors: {
+      origin: true,
+      credentials: true,
+      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization"],
+    },
     proxy: {
       "/api": {
         target: "http://localhost:5000",
@@ -33,37 +50,31 @@ export default defineConfig({
         secure: false,
         configure: (proxy, _options) => {
           proxy.on("error", (err, _req, _res) => {
-            console.log("proxy error", err);
+            console.error("Proxy error:", err);
           });
-          proxy.on("proxyReq", (proxyReq, req, _res) => {
-            console.log("Sending Request to API:", req.method, req.url);
+          proxy.on("proxyReq", (proxyReq, req) => {
+            console.log(`[Proxy] ➜ ${req.method} ${req.url}`);
           });
-          proxy.on("proxyRes", (proxyRes, req, _res) => {
+          proxy.on("proxyRes", (proxyRes, req) => {
             console.log(
-              "Received Response from API:",
-              proxyRes.statusCode,
-              req.url,
+              `[Proxy] ⇦ ${proxyRes.statusCode} ${req.url}`
             );
           });
         },
       },
     },
-    cors: {
-      origin: true,
-      credentials: true,
-      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization"],
-    },
   },
   build: {
     outDir: "dist",
-    chunkSizeWarningLimit: 600,
     sourcemap: true,
+    chunkSizeWarningLimit: 600,
   },
   esbuild: {
-    logOverride: { "this-is-undefined-in-esm": "silent" },
+    logOverride: {
+      "this-is-undefined-in-esm": "silent",
+    },
   },
   define: {
-    "process.env": {},
+    "process.env": process.env, // ensures .env vars work in frontend
   },
 });

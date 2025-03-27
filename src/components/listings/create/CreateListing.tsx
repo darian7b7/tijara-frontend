@@ -2,12 +2,11 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { ListingCategory, VehicleType, PropertyType,FuelType, TransmissionType, Condition } from "@/types/listings";
+import { ListingCategory, FuelType, TransmissionType, Condition, FormState } from "@/types/listings";
 import BasicDetailsForm from "./steps/BasicDetailsForm";
 import AdvancedDetailsForm from "./steps/AdvancedDetailsForm";
 import ReviewSection from "./steps/ReviewSection";
 import { FaCarSide, FaCog, FaCheckCircle } from "react-icons/fa";
-import type { FormState } from "@/types/listings";
 
 interface CreateListingProps {
   onSubmit: (data: FormState) => Promise<void>;
@@ -19,28 +18,30 @@ const pageTransition = {
   animate: { opacity: 1, y: 0 },
   exit: { opacity: 0, y: -20 },
   transition: {
-    duration: 0.3,
-    ease: "easeInOut",
+    type: "spring",
+    stiffness: 260,
+    damping: 20,
   },
 };
 
+// Initial form state
 const initialFormState: FormState = {
   title: "",
   description: "",
   price: 0,
   category: {
     mainCategory: ListingCategory.VEHICLES,
-    subCategory: VehicleType.CARS,
+    subCategory: "car",
   },
   location: "",
   images: [],
   details: {
     vehicles: {
-      vehicleType: VehicleType.CARS,
+      vehicleType: "car",
       make: "",
       model: "",
-      year: new Date().getFullYear().toString(),
-      mileage: "",
+      year: new Date().getFullYear(),
+      mileage: 0,
       fuelType: FuelType.GASOLINE,
       transmissionType: TransmissionType.AUTOMATIC,
       color: "",
@@ -57,27 +58,6 @@ const CreateListing: React.FC<CreateListingProps> = ({ onSubmit }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleNext = (validationPassed: boolean) => {
-    if (!validationPassed) {
-      toast.error(t("errors.pleaseFixErrors"), {
-        ariaProps: {
-          role: "alert",
-          "aria-live": "assertive",
-        },
-      });
-      return;
-    }
-    setStep((prev) => prev + 1);
-
-    // Success feedback with accessibility support
-    toast.success(t("success.stepSaved"), {
-      ariaProps: {
-        role: "status",
-        "aria-live": "polite",
-      },
-    });
-  };
-
   const handleBack = () => {
     setStep((prev) => prev - 1);
   };
@@ -93,15 +73,30 @@ const CreateListing: React.FC<CreateListingProps> = ({ onSubmit }) => {
     }
   };
 
-  const handleAdvancedDetailsSubmit = async (data: FormState, isValid: boolean) => {
-    if (isValid) {
-      setFormData((prev) => ({
-        ...prev,
-        ...data,
-        price: typeof data.price === 'string' ? parseFloat(data.price) : data.price
-      }));
-      setStep((prev) => prev + 1);
+  const handleAdvancedDetailsSubmit = (data: FormState, isValid: boolean) => {
+    if (!isValid) {
+      toast.error(t("errors.pleaseFixErrors"), {
+        ariaProps: {
+          role: "alert",
+          "aria-live": "assertive",
+        },
+      });
+      return;
     }
+
+    setFormData((prev) => ({
+      ...prev,
+      ...data,
+      details: {
+        ...prev.details,
+        vehicles: {
+          ...prev.details?.vehicles,
+          ...data.details?.vehicles,
+          features: data.details?.vehicles?.features || [],
+        },
+      },
+    }));
+    setStep((prev) => prev + 1);
   };
 
   const handleFinalSubmit = async (data: FormState) => {

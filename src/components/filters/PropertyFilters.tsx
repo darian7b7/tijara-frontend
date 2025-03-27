@@ -1,8 +1,8 @@
 import React from "react";
 import type { SelectOption } from "@/types/common";
-import { FormInput,FormField } from "@/components/listings/create/common/FormField";
+import FormField from "@/components/listings/create/common/FormField";
 import { useTranslation } from "react-i18next";
- 
+import type { FormFieldValue } from "@/components/listings/create/common/FormField";
 
 interface PropertyFiltersProps {
   onFilterChange: (filterName: string, value: string | number) => void;
@@ -15,92 +15,72 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
 
   const propertyTypeOptions: SelectOption[] = [
     { value: "", label: "All Types" },
-    { value: "house", label: "House" },
-    { value: "apartment", label: "Apartment" },
-    { value: "condo", label: "Condo" },
-    { value: "land", label: "Land" },
+    { value: "HOUSE", label: "House" },
+    { value: "APARTMENT", label: "Apartment" },
+    { value: "CONDO", label: "Condo" },
+    { value: "LAND", label: "Land" },
+    { value: "COMMERCIAL", label: "Commercial" },
+    { value: "OTHER", label: "Other" },
   ];
 
-  const handleFilterChange = (filterName: string, value: string | number) => {
-    onFilterChange(filterName, value);
-  };
+  const bedroomOptions: SelectOption[] = [
+    { value: "", label: "Any" },
+    { value: "1", label: "1+" },
+    { value: "2", label: "2+" },
+    { value: "3", label: "3+" },
+    { value: "4", label: "4+" },
+    { value: "5", label: "5+" },
+  ];
+
+  const bathroomOptions: SelectOption[] = [
+    { value: "", label: "Any" },
+    { value: "1", label: "1+" },
+    { value: "2", label: "2+" },
+    { value: "3", label: "3+" },
+    { value: "4", label: "4+" },
+  ];
 
   return (
     <div className="space-y-4">
       <FormField
-        label="Property Type"
-        name="propertyType"
         type="select"
-        value=""
-        onChange={(value) => handleFilterChange("propertyType", value)}
+        name="propertyType"
+        label={t("filters.propertyType")}
         options={propertyTypeOptions}
+        onChange={(value: FormFieldValue) => onFilterChange("propertyType", value as string)}
       />
 
       <div className="grid grid-cols-2 gap-4">
         <FormField
-          label="Min Price"
-          name="minPrice"
-          type="number"
-          value=""
-          onChange={(value) => handleFilterChange("minPrice", value)}
-          prefix="$"
+          type="select"
+          name="bedrooms"
+          label={t("filters.bedrooms")}
+          options={bedroomOptions}
+          onChange={(value: FormFieldValue) => onFilterChange("bedrooms", value as string)}
         />
+
         <FormField
-          label="Max Price"
-          name="maxPrice"
-          type="number"
-          value=""
-          onChange={(value) => handleFilterChange("maxPrice", value)}
-          prefix="$"
+          type="select"
+          name="bathrooms"
+          label={t("filters.bathrooms")}
+          options={bathroomOptions}
+          onChange={(value: FormFieldValue) => onFilterChange("bathrooms", value as string)}
         />
       </div>
 
-      <FormField
-        label="Bedrooms"
-        name="bedrooms"
-        type="number"
-        value=""
-        onChange={(value) => handleFilterChange("bedrooms", value)}
-        min={0}
-      />
-
-      <FormField
-        label="Bathrooms"
-        name="bathrooms"
-        type="number"
-        value=""
-        onChange={(value) => handleFilterChange("bathrooms", value)}
-        min={0}
-        step={0.5}
-      />
-
-      <FormInput
-        label={t("location")}
-        name="location"
-        type="text"
-        value=""
-        onChange={(e) => handleFilterChange("location", e.target.value)}
-        placeholder={t("enter_location")}
-      />
-
       <div className="grid grid-cols-2 gap-4">
-        <FormInput
-          label={t("min_area")}
-          name="areaMin"
+        <FormField
           type="number"
-          value=""
-          onChange={(e) => handleFilterChange("areaMin", e.target.value)}
-          placeholder={t("enter_min_area")}
-          suffix="m²"
+          name="minPrice"
+          label={t("filters.minPrice")}
+          onChange={(value: FormFieldValue) => onFilterChange("minPrice", Number(value))}
         />
-        <FormInput
-          label={t("max_area")}
-          name="areaMax"
+
+        <FormField
           type="number"
-          value=""
-          onChange={(e) => handleFilterChange("areaMax", e.target.value)}
-          placeholder={t("enter_max_area")}
-          suffix="m²"
+          name="maxPrice"
+          label={t("filters.maxPrice")}
+          onChange={(value: FormFieldValue) => onFilterChange("maxPrice", Number(value))}
         />
       </div>
     </div>

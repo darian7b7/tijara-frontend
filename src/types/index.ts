@@ -43,7 +43,7 @@ export type {
   ListingCreateInput,
   ListingUpdateInput,
   ListingResponse,
-  ListingsResponse,
+  PaginatedListingResponse as ListingsResponse,
   PriceRange,
   FilterParams,
   Category,

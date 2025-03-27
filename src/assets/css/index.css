@@ -1,16 +1,14 @@
 /**
  * Tailwind CSS Imports
  */
- @tailwind base;
- @tailwind components;
- @tailwind utilities;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /**
  * Base Styles
- * Global HTML element styles and resets
  */
 @layer base {
-  /* Root element styles */
   html {
     @apply h-full w-full overflow-x-hidden;
   }
@@ -24,24 +22,16 @@
     @apply h-full w-full;
   }
 
-  /* Global reset */
   * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
   }
 
-  /* Typography */
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
+  h1, h2, h3, h4, h5, h6 {
     @apply font-bold;
   }
 
-  /* RTL specific */
   html[dir="rtl"] {
     font-family: "Noto Sans Arabic", "Inter", sans-serif;
   }
@@ -49,10 +39,8 @@
 
 /**
  * Component Styles
- * Reusable component classes
  */
 @layer components {
-  /* Layout components */
   .app {
     @apply min-h-screen w-full bg-gray-50 dark:bg-gray-900;
   }
@@ -65,44 +53,42 @@
     @apply w-full max-w-7xl mx-auto;
   }
 
-  /* Button components */
+  /* Buttons */
   .btn-primary {
-    @apply px-4 py-2 bg-blue-600 text-white rounded-lg 
-           hover:bg-blue-700 focus:outline-none focus:ring-2 
-           focus:ring-blue-500 focus:ring-offset-2 
-           dark:focus:ring-offset-gray-800;
+    @apply px-4 py-2 bg-sky-600 text-white rounded-lg 
+      hover:bg-sky-700 focus:outline-none focus:ring-2 
+      focus:ring-sky-500 focus:ring-offset-2 
+      dark:focus:ring-offset-gray-800;
   }
 
   .btn-secondary {
     @apply px-4 py-2 bg-gray-200 text-gray-800 rounded-lg 
-           hover:bg-gray-300 focus:outline-none focus:ring-2 
-           focus:ring-gray-400 focus:ring-offset-2 
-           dark:focus:ring-offset-gray-800;
+      hover:bg-gray-300 focus:outline-none focus:ring-2 
+      focus:ring-gray-400 focus:ring-offset-2 
+      dark:focus:ring-offset-gray-800;
   }
 
-  /* Form components */
+  /* Form Fields */
   .input-field {
     @apply w-full px-4 py-2 border border-gray-300 rounded-lg 
-           focus:outline-none focus:ring-2 focus:ring-blue-500 
-           dark:bg-gray-700 dark:border-gray-600 dark:text-white;
+      focus:outline-none focus:ring-2 focus:ring-sky-500 
+      dark:bg-gray-700 dark:border-gray-600 dark:text-white;
   }
 
   .invalid-field {
     @apply border-red-300 bg-red-50;
   }
 
-  /* Card component */
+  /* Card */
   .card {
     @apply bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden;
   }
 }
 
 /**
- * Utility Classes
- * Custom utility classes and animations
+ * Utilities
  */
 @layer utilities {
-  /* Scrollbar utilities */
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
@@ -112,7 +98,6 @@
     scrollbar-width: none;
   }
 
-  /* Transition utilities */
   .custom-transition {
     transition-property: all;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
@@ -124,31 +109,18 @@
  * Animations
  */
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
 @keyframes shake {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  25% {
-    transform: translateX(-4px);
-  }
-  75% {
-    transform: translateX(4px);
-  }
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
 }
 
 .animate-fade-in {
@@ -163,13 +135,13 @@
   animation: shake 0.5s ease-in-out;
 }
 
-/* RTL Specific Styles */
+/**
+ * RTL Specific Classes
+ */
 html[dir="rtl"] {
-  .navbar {
-    flex-direction: row-reverse;
-  }
-
-  .icon-with-text {
+  .navbar,
+  .icon-with-text,
+  .btn-icon {
     flex-direction: row-reverse;
   }
 
@@ -186,18 +158,15 @@ html[dir="rtl"] {
   .input-field {
     text-align: right;
   }
-
-  .btn-icon {
-    flex-direction: row-reverse;
-  }
 }
 
-/* Navbar Transitions */
+/**
+ * Transitions
+ */
 .navbar-transition {
   @apply transition-all duration-300 ease-in-out;
 }
 
-/* Profile Dropdown Animation */
 .profile-dropdown {
   @apply transform opacity-0 scale-95 transition-all duration-200 ease-in-out;
 }
@@ -206,7 +175,6 @@ html[dir="rtl"] {
   @apply opacity-100 scale-100;
 }
 
-/* Auth State Transitions */
 .auth-state-transition {
   @apply transition-all duration-300 ease-in-out transform;
 }

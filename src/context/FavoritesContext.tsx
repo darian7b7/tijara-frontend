@@ -6,7 +6,7 @@ import React, {
   useEffect,
 } from "react";
 import type { APIResponse } from "@/types";
-import { favoritesAPI } from "@/api/listings.api";
+import { listingsAPI } from "@/api/listings.api";
 import { useAuth } from "./AuthContext";
 import { toast } from "react-toastify";
 
@@ -37,7 +37,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({
 
     try {
       setIsLoading(true);
-      const response = await favoritesAPI.getFavorites();
+      const response = await listingsAPI.getFavorites();
       if (response.success && response.data) {
         setFavorites(response.data.items.map((fav) => fav.itemId));
       }
@@ -77,7 +77,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({
 
       try {
         const response = await retryRequest(() =>
-          favoritesAPI.addToFavorites(itemId),
+          listingsAPI.addToFavorites(itemId),
         );
         if (response.success) {
           setFavorites((prev) => [...prev, itemId]);
@@ -112,7 +112,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({
 
       try {
         const response = await retryRequest(() =>
-          favoritesAPI.removeFromFavorites(itemId),
+          listingsAPI.removeFromFavorites(itemId),
         );
         if (response.success) {
           setFavorites((prev) => prev.filter((id) => id !== itemId));

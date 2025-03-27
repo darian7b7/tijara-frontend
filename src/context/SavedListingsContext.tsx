@@ -6,7 +6,7 @@ import React, {
   useEffect,
 } from "react";
 import type { Listing } from "@/types";
-import { ListingsAPI } from "@/api";
+import { listingsAPI } from "@/api/listings.api";
 import { useAuth } from "./AuthContext";
 import { toast } from "react-toastify";
 
@@ -81,7 +81,7 @@ export const SavedListingsProvider: React.FC<SavedListingsProviderProps> = ({
 
     try {
       setListingsState({ isLoading: true, error: null });
-      const response = await ListingsAPI.getSavedListings();
+      const response = await listingsAPI.getSavedListings();
 
       if (response.success && response.data) {
         setListingsState({
@@ -116,7 +116,7 @@ export const SavedListingsProvider: React.FC<SavedListingsProviderProps> = ({
 
         if (!newListings.some((l) => l.id === listing.id)) {
           if (isAuthenticated) {
-            const response = await ListingsAPI.addToSaved(listing.id);
+            const response = await listingsAPI.addToSaved(listing.id);
             if (!response.success) {
               throw new Error(response.message || "Failed to save listing");
             }
@@ -149,7 +149,7 @@ export const SavedListingsProvider: React.FC<SavedListingsProviderProps> = ({
     async (listingId: string) => {
       try {
         if (isAuthenticated) {
-          const response = await ListingsAPI.removeFromSaved(listingId);
+          const response = await listingsAPI.removeFromSaved(listingId);
           if (!response.success) {
             throw new Error(response.message || "Failed to remove listing");
           }

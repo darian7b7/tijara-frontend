@@ -213,108 +213,40 @@ export class AuthAPI {
         throw new Error("No refresh token available");
       }
 
-      const response = await apiClient.post<APIResponse<AuthResponse>>("/auth/refresh", {
-        refreshToken: tokens.refreshToken,
-      });
+      const response = await apiClient.post<APIResponse<AuthResponse>>(
+        "/auth/refresh",
+        { refreshToken: tokens.refreshToken },
+      );
 
-      if (response.data?.data?.tokens) {
+      if (response.data.success && response.data.data?.tokens) {
         TokenManager.setTokens(response.data.data.tokens);
       }
 
       return response.data;
     } catch (error: any) {
-      TokenManager.clearTokens();
-      return {
+      const errorResponse: APIResponse<AuthResponse> = {
         success: false,
-        error: 'Error refreshing token',
-        status: 500,
-        data: null
+        error: error.response?.data?.error || "Failed to refresh token",
+        data: null,
+        status: error.response?.status || 500,
       };
+      return errorResponse;
     }
   }
 
   static async getCurrentUser(): Promise<APIResponse<AuthResponse>> {
     try {
-      const tokens = TokenManager.getStoredTokens();
-      if (!tokens?.accessToken) {
-        throw new Error("No access token available");
-      }
-
-      const response = await apiClient.get<AuthResponse>("/auth/me");
-      return {
-        success: true,
-        data: {
-          user: response.data.user,
-          tokens: response.data.tokens
-        },
-        status: 200
-      };
+      const response = await apiClient.get<APIResponse<AuthResponse>>("/auth/me");
+      return response.data;
     } catch (error: any) {
-      if (error.response?.status === 401) {
-        TokenManager.clearTokens();
-      }
-      return {
+      const errorResponse: APIResponse<AuthResponse> = {
         success: false,
-        error: error.response?.data?.message || 'Error fetching current user',
+        error: error.response?.data?.error || "Failed to get current user",
+        data: null,
         status: error.response?.status || 500,
-        data: null
       };
+      return errorResponse;
     }
-  }
-
-  private static handleAuthError(error: any): APIResponse<AuthResponse> {
-    const authError: AuthError = {
-      code: "UNKNOWN",
-      message: "An unexpected error occurred",
-    };
-
-    if (error.response) {
-      const status = error.response.status;
-      const data = error.response.data;
-
-      switch (status) {
-        case 401:
-          authError.code = "INVALID_CREDENTIALS";
-          authError.message = data?.message || "Invalid email or password";
-          break;
-        case 403:
-          authError.code = "ACCOUNT_DISABLED";
-          authError.message = data?.message || "Account is disabled";
-          break;
-        case 404:
-          authError.code = "EMAIL_NOT_VERIFIED";
-          authError.message = data?.message || "Email not verified";
-          break;
-        case 429:
-          authError.code = "TOO_MANY_REQUESTS";
-          authError.message = "Too many attempts - please try again later";
-          break;
-        default:
-          if (data?.message) {
-            authError.message = data.message;
-          }
-      }
-
-      // Log detailed error for debugging
-      console.error("Auth Error:", {
-        status,
-        code: authError.code,
-        message: authError.message,
-        details: data,
-      });
-    } else if (error.request) {
-      authError.code = "NETWORK_ERROR";
-      authError.message = "Network error - please check your connection";
-    } else {
-      authError.message = error.message || "An unexpected error occurred";
-    }
-
-    return {
-      success: false,
-      error: authError,
-      status: error.response?.status || 500,
-      data: null
-    };
   }
 }
 

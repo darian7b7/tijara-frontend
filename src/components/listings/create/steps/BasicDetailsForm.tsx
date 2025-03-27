@@ -4,13 +4,11 @@ import { motion } from "framer-motion";
 import {
   FormState,
   ListingCategory,
-  VehicleType,
   PropertyType,
   VehicleDetails,
-  FuelType,
-  TransmissionType,
-  Condition,
+  RealEstateDetails,
 } from "@/types/listings";
+import type { VehicleType } from "@/components/listings/data/vehicleModels";
 import {
   FaCar,
   FaMotorcycle,
@@ -38,6 +36,17 @@ import {
 interface BasicDetailsFormProps {
   initialData: FormState;
   onSubmit: (data: FormState, isValid: boolean) => void;
+}
+
+interface ListingFieldSchema {
+  name: string;
+  label: string;
+  type: "text" | "number" | "select" | "textarea" | "checkbox" | "date" | "colorpicker" | "multiselect" | "email" | "password" | "tel";
+  required?: boolean;
+  options?: string[];
+  placeholder?: string;
+  min?: number;
+  max?: number;
 }
 
 // Motion animation variants - keeping them minimal for performance
@@ -82,7 +91,13 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
   onSubmit,
 }) => {
   const { t } = useTranslation();
-  const [formData, setFormData] = useState<FormState>(initialData);
+  const [formData, setFormData] = useState<FormState>({
+    ...initialData,
+    details: initialData.details || {
+      vehicles: undefined,
+      realEstate: undefined,
+    },
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [uploadingImages, setUploadingImages] = useState(false);
@@ -143,7 +158,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
 
   // Initialize make/model/year values from formData
   useEffect(() => {
-    if (formData.details.vehicles) {
+    if (formData.details?.vehicles) {
       // Set make value from form data
       if (formData.details.vehicles.make) {
         setMakeValue(formData.details.vehicles.make);
@@ -160,9 +175,9 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
       }
     }
   }, [
-    formData.details.vehicles?.make,
-    formData.details.vehicles?.model,
-    formData.details.vehicles?.year,
+    formData.details?.vehicles?.make,
+    formData.details?.vehicles?.model,
+    formData.details?.vehicles?.year,
   ]);
 
   // Effect to update title when make, model, or year changes
@@ -251,9 +266,9 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
             make: "",
             model: "",
             year: new Date().getFullYear().toString(),
-            fuelType: FuelType.GASOLINE,
-            transmissionType: TransmissionType.AUTOMATIC,
-            condition: Condition.GOOD,
+            fuelType: "GASOLINE",
+            transmissionType: "AUTOMATIC",
+            condition: "GOOD",
             features: [],
           };
         } else {
@@ -273,11 +288,14 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
     setTouched((prev) => ({ ...prev, [fieldName]: true }));
   };
 
+  // Update type definition for form field types
+  type FormFieldType = "text" | "number" | "select" | "textarea" | "checkbox" | "date" | "colorpicker" | "multiselect" | "email" | "password" | "tel";
+
   // Fixed renderFormField to handle nested objects with proper type safety
   const renderFormField = (
     label: string,
     fieldName: string,
-    type: string = "text",
+    type: FormFieldType = "text",
     options?: Array<{ value: string; label: string }>,
     icon?: React.ReactNode,
     placeholder?: string,
@@ -311,7 +329,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
         <FormField
           name={fieldName}
           label={label}
-          type={type as any}
+          type={type}
           value={fieldValue ?? ""}
           onChange={(value) => handleInputChange(fieldName, value)}
           error={isTouched ? fieldError : undefined}
@@ -328,87 +346,40 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
   };
 
   const renderVehicleFields = () => {
-    if (
-      !formData.category?.mainCategory ||
-      formData.category.mainCategory !== ListingCategory.VEHICLES
-    ) {
+    if (!formData.details?.vehicles) {
       return null;
     }
 
-    // Get the vehicle subcategory type
     const vehicleType = formData.category.subCategory as VehicleType;
-    const vehicleSchemaKey = vehicleType?.toLowerCase();
-
-    if (!vehicleSchemaKey || !listingsFieldSchema[vehicleSchemaKey]) {
-      return null;
-    }
-
-    // Get the schema fields for this vehicle type
-    const fields = listingsFieldSchema[vehicleSchemaKey];
-
-    // Helper function to get field value
-    const getFieldValue = (fieldName: string) => {
-      return formData.details?.vehicles?.[fieldName as keyof VehicleDetails] || "";
-    };
-
-    // Helper function to handle field change
-    const handleFieldChange = (fieldName: string, value: any) => {
-      const updatedVehicleDetails: VehicleDetails = {
-        ...formData.details.vehicles!,
-        [fieldName]: value,
-        vehicleType: formData.category.subCategory as VehicleType, // Ensure vehicleType is always set
-      };
-
-      handleInputChange("details.vehicles", updatedVehicleDetails);
-
-      // Special handling for make/model fields to maintain local state
-      if (fieldName === "make") {
-        setMakeValue(value);
-        setModelValue(""); // Reset model when make changes
-      } else if (fieldName === "model") {
-        setModelValue(value);
-      }
-    };
+    const fields = getBasicFieldsForSubcategory();
 
     return (
       <div className="space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {fields.map((field) => {
-            let options;
-            if (field.name === "make") {
-              options = generateMakeOptions();
-            } else if (field.name === "model") {
-              options = getModelOptions(makeValue);
-            } else if (field.options) {
-              options = field.options.map((opt: string) => ({
+        {fields.map((field: ListingFieldSchema) => {
+          const fieldValue = formData.details?.vehicles?.[field.name];
+          const numericValue = field.type === "number" && fieldValue 
+            ? parseFloat(fieldValue as string) 
+            : fieldValue;
+
+          return (
+            <FormField
+              key={field.name}
+              name={field.name}
+              label={t(field.label)}
+              type={field.type}
+              options={field.options?.map((opt: string) => ({
                 value: opt,
-                label: opt,
-              }));
-            }
-
-            // Convert ListingFieldType to FormField type
-            const formFieldType =
-              field.type === "multiselect"
-                ? "select"
-                : field.type === "checkbox"
-                  ? "select"
-                  : field.type;
-
-            return (
-              <FormField
-                key={field.name}
-                label={t(field.label.toLowerCase())}
-                name={`details.vehicles.${field.name}`}
-                type={formFieldType}
-                value={getFieldValue(field.name)}
-                onChange={(value) => handleFieldChange(field.name, value)}
-                options={options}
-                required={field.required}
-                error={errors[`details.vehicles.${field.name}`]}
-              />
-            );
-          })}
-        </div>
+                label: t(`options.${opt}`),
+              }))}
+              value={numericValue || ""}
+              onChange={(value) => handleInputChange(`details.vehicles.${field.name}`, value)}
+              required={field.required}
+              placeholder={field.placeholder ? t(field.placeholder) : undefined}
+              min={field.min}
+              max={field.max}
+            />
+          );
+        })}
       </div>
     );
   };
@@ -466,18 +437,16 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
   };
 
   const renderCategoryFields = () => {
-    if (!formData.category?.mainCategory) {
+    if (!formData.details) {
       return null;
     }
 
-    switch (formData.category.mainCategory) {
-      case ListingCategory.VEHICLES:
-        return renderVehicleFields();
-      case ListingCategory.REAL_ESTATE:
-        return renderRealEstateFields();
-      default:
-        return null;
+    if (formData.category.mainCategory === ListingCategory.VEHICLES) {
+      return renderVehicleFields();
+    } else if (formData.category.mainCategory === ListingCategory.REAL_ESTATE) {
+      return renderRealEstateFields();
     }
+    return null;
   };
 
   const handleCategoryChange = (
@@ -485,10 +454,10 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
     subCategory: VehicleType | PropertyType,
   ) => {
     // Update the category in form data
-    setFormData((prev: any) => {
+    setFormData((prev: FormState) => {
       const newData = {
         ...prev,
-      category: {
+        category: {
           mainCategory,
           subCategory,
         },
@@ -502,9 +471,9 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
             make: "",
             model: "",
             year: new Date().getFullYear().toString(),
-            fuelType: FuelType.GASOLINE,
-            transmissionType: TransmissionType.AUTOMATIC,
-            condition: Condition.GOOD,
+            fuelType: "GASOLINE",
+            transmissionType: "AUTOMATIC",
+            condition: "GOOD",
             features: [],
           },
         };
@@ -516,7 +485,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
             yearBuilt: "",
             bedrooms: "",
             bathrooms: "",
-            condition: Condition.GOOD,
+            condition: "GOOD",
             features: [],
           },
         };
@@ -820,7 +789,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
   };
 
   const renderVehicleSelect = () => {
-      return (
+    return (
       <div className="mb-6">
         <label className="block text-sm font-medium mb-1 text-gray-700">
           {t("vehicleType")}
@@ -846,12 +815,12 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
               <span className="text-sm font-medium">{category.label}</span>
             </button>
           ))}
-          </div>
+        </div>
         {errors.category && touched.category && (
           <p className="mt-1 text-sm text-red-600">{errors.category}</p>
         )}
-        </div>
-      );
+      </div>
+    );
   };
 
   const renderRealEstateSelect = () => {
@@ -883,8 +852,8 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
               {category.icon}
               <span className="text-sm font-medium">{category.label}</span>
             </button>
-                ))}
-            </div>
+          ))}
+        </div>
         {errors.category && touched.category && (
           <p className="mt-1 text-sm text-red-600">{errors.category}</p>
         )}
@@ -894,224 +863,229 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
 
   return (
     <motion.div
-      initial={formAnimations}
-      animate={formAnimations}
-      exit={formAnimations}
-      transition={{ duration: 0.3 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
       className="space-y-6"
     >
-     <div className="space-y-6">
-        {/* Category Selection Tab */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-          <h2 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">
-            {t("category")}
-          </h2>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={formAnimations}
+        className="bg-white shadow-sm rounded-lg p-6"
+      >
+        <div className="space-y-6">
+          {/* Category Selection Tab */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+            <h2 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">
+              {t("category")}
+            </h2>
 
-          <div className="flex justify-start mb-6">
-            <div className="flex rounded-md shadow-sm" role="group">
-              <button
-                type="button"
-                onClick={() =>
-                  handleCategoryChange(
-                    ListingCategory.VEHICLES,
-                    VehicleType.CARS,
-                  )
-                }
-                className={`px-4 py-2 text-sm font-medium rounded-l-md focus:outline-none focus:z-10 ${
-                  formData.category.mainCategory === ListingCategory.VEHICLES
-                    ? "bg-blue-500 text-white"
-                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
-                }`}
-                aria-pressed={
-                  formData.category.mainCategory === ListingCategory.VEHICLES
-                }
-              >
-                <FaCar className="inline-block mr-2 -mt-1" />
-                {t("vehicles")}
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  handleCategoryChange(
-                    ListingCategory.REAL_ESTATE,
-                    PropertyType.HOUSE,
-                  )
-                }
-                className={`px-4 py-2 text-sm font-medium rounded-r-md focus:outline-none focus:z-10 ${
-                  formData.category.mainCategory === ListingCategory.REAL_ESTATE
-                    ? "bg-green-500 text-white"
-                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
-                }`}
-                aria-pressed={
-                  formData.category.mainCategory === ListingCategory.REAL_ESTATE
-                }
-              >
-                <BiBuildingHouse className="inline-block mr-2 -mt-1" />
-                {t("realEstate")}
-              </button>
-        </div>
-        </div>
-
-          {/* Subcategory selection */}
-          {formData.category.mainCategory === ListingCategory.VEHICLES
-            ? renderVehicleSelect()
-            : renderRealEstateSelect()}
-        </div>
-
-        {/* Basic Details Section */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-          <h2 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">
-            {t("listingDetails")}
-          </h2>
-
-          {/* Title field with auto-generation helper text */}
-          {renderFormField(
-            t("title"),
-            "title",
-            "text",
-            undefined,
-            <FaTag />,
-            t("titlePlaceholder"),
-            undefined,
-            undefined,
-            makeValue && modelValue ? t("autoGeneratedFromDetails") : undefined,
-          )}
-
-          {/* Render category-specific fields */}
-          {renderCategoryFields()}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-            {renderFormField(
-              t("price"),
-              "price",
-              "number",
-              undefined,
-              <FaMoneyBillWave />,
-              t("pricePlaceholder"),
-            )}
-            {renderFormField(
-              t("location"),
-              "location",
-              "text",
-              undefined,
-              <FaMapMarkerAlt />,
-              t("locationPlaceholder"),
-            )}
-            </div>
-
-          {renderFormField(
-            t("description"),
-            "description",
-            "textarea",
-            undefined,
-            <FaAlignLeft />,
-            t("descriptionPlaceholder"),
-          )}
-
-          {/* Image uploader will go here */}
-          <div className="mt-6">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t("images")}
-              <span className="text-red-500 ml-1" aria-hidden="true">
-                *
-              </span>
-          </label>
-            <div className="mt-2 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-              <div className="space-y-1 text-center">
-                <svg
-                  className="mx-auto h-12 w-12 text-gray-400"
-                  stroke="currentColor"
-                  fill="none"
-                  viewBox="0 0 48 48"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                    strokeWidth={2}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                <div className="flex text-sm text-gray-600 dark:text-gray-400">
-                  <label
-                    htmlFor="file-upload"
-                    className="relative cursor-pointer rounded-md font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 focus-within:outline-none"
-                  >
-                    <span>{t("uploadImages")}</span>
-          <input
-                      id="file-upload"
-                      name="file-upload"
-                      type="file"
-                      multiple
-                      accept="image/jpeg,image/png,image/webp"
-                      className="sr-only"
-                      onChange={handleImageUpload}
-                    />
-          </label>
-                  <p className="pl-1">{t("dragAndDrop")}</p>
-        </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  PNG, JPG, WEBP up to 5MB
-                </p>
-      </div>
-      </div>
-      
-            {/* Preview of uploaded images */}
-            {formData.images.length > 0 && (
-              <div className="mt-4">
-                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {t("uploadedImages")} ({formData.images.length})
-                </h4>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {formData.images.map((image, index) => (
-              <div
-                key={index}
-                      className="relative border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden h-24"
-                    >
-                      {image instanceof File ? (
-                        <img
-                          src={URL.createObjectURL(image)}
-                          alt={`Upload ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                <img
-                  src={image}
-                          alt={`Upload ${index + 1}`}
-                          className="w-full h-full object-cover"
-                />
-                      )}
+            <div className="flex justify-start mb-6">
+              <div className="flex rounded-md shadow-sm" role="group">
                 <button
                   type="button"
-                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400"
-                        onClick={() => handleRemoveImage(index)}
-                        aria-label={t("removeImage")}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
+                  onClick={() =>
+                    handleCategoryChange(
+                      ListingCategory.VEHICLES,
+                      VehicleType.CARS,
+                    )
+                  }
+                  className={`px-4 py-2 text-sm font-medium rounded-l-md focus:outline-none focus:z-10 ${
+                    formData.category.mainCategory === ListingCategory.VEHICLES
+                      ? "bg-blue-500 text-white"
+                      : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
+                  }`}
+                  aria-pressed={
+                    formData.category.mainCategory === ListingCategory.VEHICLES
+                  }
+                >
+                  <FaCar className="inline-block mr-2 -mt-1" />
+                  {t("vehicles")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleCategoryChange(
+                      ListingCategory.REAL_ESTATE,
+                      PropertyType.HOUSE,
+                    )
+                  }
+                  className={`px-4 py-2 text-sm font-medium rounded-r-md focus:outline-none focus:z-10 ${
+                    formData.category.mainCategory === ListingCategory.REAL_ESTATE
+                      ? "bg-green-500 text-white"
+                      : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
+                  }`}
+                  aria-pressed={
+                    formData.category.mainCategory === ListingCategory.REAL_ESTATE
+                  }
+                >
+                  <BiBuildingHouse className="inline-block mr-2 -mt-1" />
+                  {t("realEstate")}
                 </button>
               </div>
-            ))}
-                </div>
-          </div>
-        )}
-      </div>
-    </div>
+            </div>
 
-      <div className="flex justify-end pt-6">
-        <button
+            {/* Subcategory selection */}
+            {formData.category.mainCategory === ListingCategory.VEHICLES
+              ? renderVehicleSelect()
+              : renderRealEstateSelect()}
+          </div>
+
+          {/* Basic Details Section */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+            <h2 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">
+              {t("listingDetails")}
+            </h2>
+
+            {/* Title field with auto-generation helper text */}
+            {renderFormField(
+              t("title"),
+              "title",
+              "text",
+              undefined,
+              <FaTag />,
+              t("titlePlaceholder"),
+              undefined,
+              undefined,
+              makeValue && modelValue ? t("autoGeneratedFromDetails") : undefined,
+            )}
+
+            {/* Render category-specific fields */}
+            {renderCategoryFields()}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+              {renderFormField(
+                t("price"),
+                "price",
+                "number",
+                undefined,
+                <FaMoneyBillWave />,
+                t("pricePlaceholder"),
+              )}
+              {renderFormField(
+                t("location"),
+                "location",
+                "text",
+                undefined,
+                <FaMapMarkerAlt />,
+                t("locationPlaceholder"),
+              )}
+            </div>
+
+            {renderFormField(
+              t("description"),
+              "description",
+              "textarea",
+              undefined,
+              <FaAlignLeft />,
+              t("descriptionPlaceholder"),
+            )}
+
+            {/* Image uploader will go here */}
+            <div className="mt-6">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                {t("images")}
+                <span className="text-red-500 ml-1" aria-hidden="true">
+                  *
+                </span>
+              </label>
+              <div className="mt-2 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                <div className="space-y-1 text-center">
+                  <svg
+                    className="mx-auto h-12 w-12 text-gray-400"
+                    stroke="currentColor"
+                    fill="none"
+                    viewBox="0 0 48 48"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  <div className="flex text-sm text-gray-600 dark:text-gray-400">
+                    <label
+                      htmlFor="file-upload"
+                      className="relative cursor-pointer rounded-md font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 focus-within:outline-none"
+                    >
+                      <span>{t("uploadImages")}</span>
+                      <input
+                        id="file-upload"
+                        name="file-upload"
+                        type="file"
+                        multiple
+                        accept="image/jpeg,image/png,image/webp"
+                        className="sr-only"
+                        onChange={handleImageUpload}
+                      />
+                    </label>
+                    <p className="pl-1">{t("dragAndDrop")}</p>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    PNG, JPG, WEBP up to 5MB
+                  </p>
+                </div>
+              </div>
+
+              {/* Preview of uploaded images */}
+              {formData.images.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    {t("uploadedImages")} ({formData.images.length})
+                  </h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {formData.images.map((image, index) => (
+                      <div
+                        key={index}
+                        className="relative border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden h-24"
+                      >
+                        {image instanceof File ? (
+                          <img
+                            src={URL.createObjectURL(image)}
+                            alt={`Upload ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <img
+                            src={image}
+                            alt={`Upload ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+                        <button
+                          type="button"
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400"
+                          onClick={() => handleRemoveImage(index)}
+                          aria-label={t("removeImage")}
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end pt-6">
+          <button
             type="button"
             onClick={() => {
               const isValid = validateForm();
@@ -1128,9 +1102,9 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
             ) : (
               t("next")
             )}
-        </button>
-      </div>
-      </div>
+          </button>
+        </div>
+      </motion.div>
 
       {/* Loading overlay */}
       {(isSubmitting || uploadingImages) && (
@@ -1138,7 +1112,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
           <div className="bg-white p-4 rounded-lg shadow-lg flex flex-col items-center">
             <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
             <p>{uploadingImages ? t("uploadingImages") : t("submitting")}</p>
-    </div>
+          </div>
         </div>
       )}
     </motion.div>
