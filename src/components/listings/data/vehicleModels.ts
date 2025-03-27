@@ -1,12 +1,13 @@
 // Vehicle type definitions
-export type VehicleType =
-  | "car"
-  | "motorcycle"
-  | "truck"
-  | "van"
-  | "bus"
-  | "tractor"
-  | "construction";
+export enum VehicleType {
+  CAR = "car",
+  MOTORCYCLE = "motorcycle",
+  TRUCK = "truck",
+  VAN = "van",
+  BUS = "bus",
+  TRACTOR = "tractor",
+  CONSTRUCTION = "construction"
+}
 
 export type ModelData = {
   [make: string]: string[];
@@ -26,29 +27,29 @@ import { tractorsModels } from "@/components/listings/data/subcategories/tractor
 import { constructionModels } from "@/components/listings/data/subcategories/constructionModels";
 
 const vehicleModelsByType: Record<VehicleType, VehicleDataStructure> = {
-  car: {
+  [VehicleType.CAR]: {
     regular: carModels.regular || {},
     electric: carModels.electric || {},
   },
-  truck: {
+  [VehicleType.TRUCK]: {
     regular: trucksModels.regular || {},
     electric: trucksModels.electric || {},
   },
-  van: {
+  [VehicleType.VAN]: {
     regular: vansModels.regular || {},
     electric: vansModels.electric || {},
   },
-  bus: {
+  [VehicleType.BUS]: {
     regular: busesModels.regular || {},
   },
-  motorcycle: {
+  [VehicleType.MOTORCYCLE]: {
     regular: motorcycleModels.regular || {},
     electric: motorcycleModels.electric || {},
   },
-  tractor: {
+  [VehicleType.TRACTOR]: {
     regular: tractorsModels.regular || {},
   },
-  construction: {
+  [VehicleType.CONSTRUCTION]: {
     regular: constructionModels.regular || {},
   },
 };

@@ -52,12 +52,12 @@ const formAnimations = { opacity: 1 };
 
 // Vehicle subcategories with proper type safety
 const vehicleSubcategories = [
-  { value: VehicleType.CARS, label: "Cars", icon: <FaCar /> },
-  { value: VehicleType.MOTORCYCLES, label: "Motorcycles", icon: <FaMotorcycle /> },
-  { value: VehicleType.TRUCKS, label: "Trucks", icon: <FaTruck /> },
-  { value: VehicleType.VANS, label: "Vans", icon: <FaShuttleVan /> },
-  { value: VehicleType.BUSES, label: "Buses", icon: <FaBus /> },
-  { value: VehicleType.TRACTORS, label: "Tractors", icon: <FaTractor /> },
+  { value: VehicleType.CAR, label: "Cars", icon: <FaCar /> },
+  { value: VehicleType.MOTORCYCLE, label: "Motorcycles", icon: <FaMotorcycle /> },
+  { value: VehicleType.TRUCK, label: "Trucks", icon: <FaTruck /> },
+  { value: VehicleType.VAN, label: "Vans", icon: <FaShuttleVan /> },
+  { value: VehicleType.BUS, label: "Buses", icon: <FaBus /> },
+  { value: VehicleType.TRACTOR, label: "Tractors", icon: <FaTractor /> },
   { value: VehicleType.CONSTRUCTION, label: "Construction", icon: <FaTruckPickup /> },
 ] as const;
 
@@ -98,16 +98,15 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
   );
 
   // Helper function to convert VehicleType enum to VehicleDataType
-  const getVehicleDataType = (vehicleType: VehicleType): string => {
-    const mapping = {
-      [VehicleType.CARS]: "car",
-      [VehicleType.TRUCKS]: "truck",
-      [VehicleType.BUSES]: "bus",
-      [VehicleType.VANS]: "van",
-      [VehicleType.MOTORCYCLES]: "motorcycle",
-      [VehicleType.CONSTRUCTION]: "construction",
-      [VehicleType.TRACTORS]: "tractor",
-    } as const;
+  const mapEnumToModelType = (vehicleType: VehicleType): string => {
+    const mapping: Record<VehicleType, string> = {
+      [VehicleType.CAR]: "car",
+      [VehicleType.TRUCK]: "truck",
+      [VehicleType.MOTORCYCLE]: "motorcycle",
+      [VehicleType.RV]: "van", // mapping RV to van as closest match
+      [VehicleType.BOAT]: "construction", // mapping BOAT to construction as fallback
+      [VehicleType.OTHER]: "car", // fallback to car for OTHER
+    };
     return mapping[vehicleType] || "car";
   };
 
@@ -125,7 +124,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
   const generateMakeOptions = () => {
     if (!formData.category.subCategory) return [];
     const makes = getMakesForType(
-      getVehicleDataType(formData.category.subCategory as VehicleType),
+      mapEnumToModelType(formData.category.subCategory as VehicleType),
     );
     return makes.map((make) => ({ value: make, label: make }));
   };
@@ -135,7 +134,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
     if (!formData.category.subCategory || !make) return [];
     const models = getModelsForMakeAndType(
       make,
-      getVehicleDataType(formData.category.subCategory as VehicleType),
+      mapEnumToModelType(formData.category.subCategory as VehicleType),
     );
     return models.map((model) => ({ value: model, label: model }));
   };
@@ -168,7 +167,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
   useEffect(() => {
     if (makeValue && modelValue) {
       // Get the selected make and model labels
-      const vehicleDataType = getVehicleDataType(
+      const vehicleDataType = mapEnumToModelType(
         formData.category.subCategory as VehicleType,
       );
       const makes = getMakesForType(vehicleDataType);
@@ -353,11 +352,13 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
           // Get field options
           let options = field.options;
           if (field.name === "make") {
-            options = getMakesForType(getVehicleDataType(formData.category.subCategory as VehicleType));
+            options = getMakesForType(
+              mapEnumToModelType(formData.category.subCategory as VehicleType),
+            );
           } else if (field.name === "model" && makeValue) {
             options = getModelsForMakeAndType(
               makeValue,
-              getVehicleDataType(formData.category.subCategory as VehicleType)
+              mapEnumToModelType(formData.category.subCategory as VehicleType)
             );
           }
 
@@ -372,7 +373,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
                 label: t(`options.${opt}`),
               }))}
               value={processedValue}
-              onChange={(value) => handleInputChange(`details.vehicles.${field.name}`, value)}
+              onChange={(value) => handleVehicleFieldChange(field.name, value)}
               required={field.required}
               placeholder={field.placeholder ? t(field.placeholder) : undefined}
               min={field.min}
@@ -861,6 +862,19 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
     );
   };
 
+  const handleVehicleFieldChange = (field: string, value: string | number) => {
+    setFormData((prev) => ({
+      ...prev,
+      details: {
+        ...prev.details,
+        vehicles: {
+          ...prev.details.vehicles,
+          [field]: field === 'year' ? Number(value) : value,
+        },
+      },
+    }));
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -887,7 +901,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
                   onClick={() =>
                     handleCategoryChange(
                       ListingCategory.VEHICLES,
-                      VehicleType.CARS,
+                      VehicleType.CAR,
                     )
                   }
                   className={`px-4 py-2 text-sm font-medium rounded-l-md focus:outline-none focus:z-10 ${

@@ -1,51 +1,55 @@
-import React, { useEffect, useState } from "react";
-import { useAuth } from "@/context/AuthContext";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { listingsAPI } from "@/api/listings.api";
-import type { Listing } from "@/types";
-import ListingCard from "@/components/listings/details/ListingCard";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { ListingsResponse, Listing } from "@/types/listings";
+import apiClient from "@/api/apiClient";
+import ListingCard from "@/components/listings/common/ListingCard";
+import { useAuth } from "@/context/AuthContext";
 import { toast } from "react-toastify";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
-export function MyListings() {
+const MyListings = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const ITEMS_PER_PAGE = 9;
+  const limit = 10;
 
-  const fetchListings = async (pageNum: number) => {
+  const fetchListings = async () => {
     if (!user?.id) return;
 
     try {
       setLoading(true);
-      const response = await listingsAPI.getUserListings({ 
-        page: pageNum, 
-        limit: ITEMS_PER_PAGE 
+      const response = await apiClient.get<ListingsResponse>('/listings/my', {
+        params: {
+          page,
+          limit
+        }
       });
-      if (pageNum === 1) {
-        setListings(response.items || []);
+      
+      if (page === 1) {
+        setListings(response.data.listings);
       } else {
-        setListings(prev => [...prev, ...(response.items || [])]);
+        setListings(prev => [...prev, ...response.data.listings]);
       }
-      setHasMore(response.total > page * ITEMS_PER_PAGE);
-    } catch (error) {
-      console.error("Error fetching listings:", error);
-      toast.error(t("profile.fetch_error"));
+      setHasMore(response.data.listings.length === limit);
+      setError(null);
+    } catch (err) {
+      setError(t('errors.failedToFetchListings'));
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchListings(page);
+    fetchListings();
   }, [page, user]);
 
   const loadMore = () => {
     if (!loading && hasMore) {
-      setPage(prev => prev + 1);
+      setPage(p => p + 1);
     }
   };
 
@@ -59,9 +63,9 @@ export function MyListings() {
     }
 
     try {
-      await listingsAPI.deleteListing(listingId);
+      await apiClient.delete(`/listings/${listingId}`);
       toast.success(t("profile.listing_deleted"));
-      fetchListings(1); // Refresh the listings
+      fetchListings();
     } catch (error) {
       console.error("Error deleting listing:", error);
       toast.error(t("profile.delete_error"));
@@ -72,45 +76,40 @@ export function MyListings() {
     return <LoadingSpinner />;
   }
 
+  if (error) {
+    return <div className="text-red-500">{error}</div>;
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-          {t("profile.my_listings")} ({listings.length})
-        </h3>
+    <div className="space-y-4">
+      <h2 className="text-2xl font-bold">{t('profile.myListings')} ({listings.length})</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {listings.map((listing) => (
+          <ListingCard
+            key={listing.id}
+            listing={listing}
+            showActions={true}
+            onEdit={handleEditListing}
+            onDelete={handleDeleteListing}
+          />
+        ))}
       </div>
-
-      {listings.length === 0 ? (
-        <div className="text-center py-8 text-gray-600 dark:text-gray-400">
-          {t("profile.no_listings")}
+      {loading && <div className="text-center">{t('common.loading')}</div>}
+      {!loading && hasMore && (
+        <button
+          onClick={loadMore}
+          className="w-full py-2 text-center text-blue-600 hover:text-blue-800"
+        >
+          {t('common.loadMore')}
+        </button>
+      )}
+      {!loading && !hasMore && listings.length === 0 && (
+        <div className="text-center text-gray-500">
+          {t('profile.noListings')}
         </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {listings.map((listing) => (
-              <ListingCard
-                key={listing.id}
-                listing={listing}
-                showActions={true}
-                onEdit={handleEditListing}
-                onDelete={handleDeleteListing}
-              />
-            ))}
-          </div>
-
-          {hasMore && (
-            <div className="flex justify-center mt-8">
-              <button
-                onClick={loadMore}
-                disabled={loading}
-                className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-              >
-                {loading ? t("profile.loading_more") : t("profile.load_more")}
-              </button>
-            </div>
-          )}
-        </>
       )}
     </div>
   );
-}
+};
+
+export default MyListings;
