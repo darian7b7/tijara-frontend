@@ -112,26 +112,23 @@ export class TokenManager {
 }
 
 export class AuthAPI {
-  static async signup(data: SignupRequest): Promise<AuthResponse> {
+  static async signup(data: SignupRequest): Promise<APIResponse<User>> {
     try {
-      const response = await apiClient.post<AuthResponse>("/auth/register", data);
-      
-      if (response.data.success && response.data.data?.tokens) {
-        TokenManager.setTokens(response.data.data.tokens);
-      }
-      
-      return response.data;
+      const response = await apiClient.post("/auth/register", data);
+      return {
+        success: true,
+        data: response.data,
+        status: response.status,
+      };
     } catch (error: any) {
-      if (error.response?.data) {
-        throw error.response.data;
-      }
+      const message = error?.response?.data?.message || "Registration failed";
+      const errors = error?.response?.data?.errors || [];
 
-      throw {
+      return {
         success: false,
-        error: {
-          code: "NETWORK_ERROR",
-          message: error.message || "Network error occurred",
-        }
+        status: error?.response?.status || 500,
+        message,
+        errors,
       };
     }
   }
