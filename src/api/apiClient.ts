@@ -11,43 +11,48 @@ const apiClient = axios.create({
   withCredentials: true,
 });
 
-// Update route prefixes to include /api
+// Remove /api from route prefixes since it's already in the URL
 const ROUTES = {
-  auth: "/api/auth",
-  listings: "/api/listings",
-  users: "/api/users",
-  messages: "/api/messages",
-  uploads: "/api/uploads",
-  notifications: "/api/notifications",
+  auth: "/auth",          // Remove /api prefix
+  listings: "/listings",
+  users: "/users",
+  messages: "/messages",
+  uploads: "/uploads",
+  notifications: "/notifications",
 };
 
 // Update request interceptor
 apiClient.interceptors.request.use(
   (config) => {
-    // Log the request details
-    console.log('🚀 API Request:', {
+    // Log the request details before URL modification
+    console.log('🚀 Original Request:', {
       method: config.method?.toUpperCase(),
       url: config.url,
-      data: config.data,
+      baseURL: config.baseURL,
     });
 
-    // Don't modify URL if it already starts with /api
+    // Add /api prefix to all routes if not already present
     if (!config.url?.startsWith('/api')) {
-      if (config.url?.startsWith("/auth")) {
-        config.url = ROUTES.auth + config.url.replace("/auth", "");
-      } else if (config.url?.startsWith("/listings")) {
-        config.url = ROUTES.listings + config.url.replace("/listings", "");
-      } else if (config.url?.startsWith("/users")) {
-        config.url = ROUTES.users + config.url.replace("/users", "");
-      } else if (config.url?.startsWith("/messages")) {
-        config.url = ROUTES.messages + config.url.replace("/messages", "");
-      } else if (config.url?.startsWith("/uploads")) {
-        config.url = ROUTES.uploads + config.url.replace("/uploads", "");
-      } else if (config.url?.startsWith("/notifications")) {
-        config.url =
-          ROUTES.notifications + config.url.replace("/notifications", "");
-      }
+      config.url = `/api${config.url}`;
     }
+
+    // Now handle the specific route prefixes
+    if (config.url?.includes("/auth")) {
+      config.url = config.url.replace("/auth", ROUTES.auth);
+    } else if (config.url?.includes("/listings")) {
+      config.url = config.url.replace("/listings", ROUTES.listings);
+    } else if (config.url?.includes("/users")) {
+      config.url = config.url.replace("/users", ROUTES.users);
+    } else if (config.url?.includes("/messages")) {
+      config.url = config.url.replace("/messages", ROUTES.messages);
+    } else if (config.url?.includes("/uploads")) {
+      config.url = config.url.replace("/uploads", ROUTES.uploads);
+    } else if (config.url?.includes("/notifications")) {
+      config.url = config.url.replace("/notifications", ROUTES.notifications);
+    }
+
+    // Log the final URL
+    console.log('🔗 Final URL:', `${config.baseURL}${config.url}`);
 
     // Add token to request
     const tokens = JSON.parse(localStorage.getItem("auth_tokens") || "null");

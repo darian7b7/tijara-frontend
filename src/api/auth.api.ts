@@ -136,8 +136,8 @@ export class AuthAPI {
     try {
       console.log("Sending login request:", { email: data.email });
       
-      // Make sure we're using the correct endpoint
-      const response = await apiClient.post<AuthResponse>("/auth/login", {
+      // Remove /auth from the URL since it's handled by the interceptor
+      const response = await apiClient.post<AuthResponse>("/login", {
         email: data.email,
         password: data.password
       });
@@ -148,7 +148,6 @@ export class AuthAPI {
         hasTokens: !!response.data.data?.tokens
       });
 
-      // Store tokens immediately if successful
       if (response.data.success && response.data.data?.tokens) {
         TokenManager.setTokens(response.data.data.tokens);
       }
