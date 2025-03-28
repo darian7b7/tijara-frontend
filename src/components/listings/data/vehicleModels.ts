@@ -6,7 +6,7 @@ export enum VehicleType {
   VAN = "van",
   BUS = "bus",
   TRACTOR = "tractor",
-  CONSTRUCTION = "construction"
+  CONSTRUCTION = "construction",
 }
 
 export type ModelData = {

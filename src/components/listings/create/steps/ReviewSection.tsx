@@ -183,9 +183,7 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({
           {formData.features && formData.features.length > 0 && (
             <div className="col-span-2">
               <div className="text-sm text-gray-500">{t("features")}</div>
-              <div className="font-medium">
-                {formData.features.join(", ")}
-              </div>
+              <div className="font-medium">{formData.features.join(", ")}</div>
             </div>
           )}
         </div>
@@ -237,9 +235,7 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({
           {formData.features && formData.features.length > 0 && (
             <div className="col-span-2">
               <div className="text-sm text-gray-500">{t("features")}</div>
-              <div className="font-medium">
-                {formData.features.join(", ")}
-              </div>
+              <div className="font-medium">{formData.features.join(", ")}</div>
             </div>
           )}
         </div>
@@ -270,7 +266,7 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({
             <div className="text-sm text-gray-500">{t("location")}</div>
             <div className="font-medium">{formData.location}</div>
           </div>
-        </div>
+        </div>,
       )}
 
       {/* Listing Action */}
@@ -325,19 +321,17 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({
       </div>
 
       {/* Category-specific Details */}
-      {formData.category.mainCategory === ListingCategory.VEHICLES ? (
-        renderSection(
-          t("vehicleDetails"),
-          <FaCar className="w-5 h-5 text-blue-500" />,
-          renderVehicleDetails()
-        )
-      ) : (
-        renderSection(
-          t("propertyDetails"),
-          <FaHome className="w-5 h-5 text-blue-500" />,
-          renderRealEstateDetails()
-        )
-      )}
+      {formData.category.mainCategory === ListingCategory.VEHICLES
+        ? renderSection(
+            t("vehicleDetails"),
+            <FaCar className="w-5 h-5 text-blue-500" />,
+            renderVehicleDetails(),
+          )
+        : renderSection(
+            t("propertyDetails"),
+            <FaHome className="w-5 h-5 text-blue-500" />,
+            renderRealEstateDetails(),
+          )}
 
       {/* Images */}
       {renderSection(
@@ -350,13 +344,15 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({
               className="aspect-w-16 aspect-h-9 rounded-lg overflow-hidden"
             >
               <img
-                src={typeof image === "string" ? image : URL.createObjectURL(image)}
+                src={
+                  typeof image === "string" ? image : URL.createObjectURL(image)
+                }
                 alt={`${t("image")} ${index + 1}`}
                 className="object-cover w-full h-full"
               />
             </div>
           ))}
-        </div>
+        </div>,
       )}
 
       {/* Submit Button */}

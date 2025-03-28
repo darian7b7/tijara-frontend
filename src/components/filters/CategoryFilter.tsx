@@ -9,9 +9,8 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
   onCategorySelect,
 }) => {
   const categories = [ListingCategory.VEHICLES, ListingCategory.REAL_ESTATE];
-  const [selectedCategory, setSelectedCategory] = useState<ListingCategory | null>(
-    null,
-  );
+  const [selectedCategory, setSelectedCategory] =
+    useState<ListingCategory | null>(null);
 
   const handleCategorySelect = (category: ListingCategory) => {
     setSelectedCategory(category);
@@ -19,10 +18,11 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
   };
 
   const getCategoryDisplayName = (category: ListingCategory): string => {
-    return category.toLowerCase()
-      .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
+    return category
+      .toLowerCase()
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
   };
 
   return (

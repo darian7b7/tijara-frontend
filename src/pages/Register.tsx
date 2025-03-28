@@ -45,11 +45,15 @@ export default function Register() {
       toast.success("Registration successful!");
     } catch (err: any) {
       console.error("Registration error:", err);
-      setFormError(err.error?.message || err.message || "Registration failed. Please try again.");
-      
+      setFormError(
+        err.error?.message ||
+          err.message ||
+          "Registration failed. Please try again.",
+      );
+
       // If email is already registered, clear the password fields
       if (err.error?.message?.toLowerCase().includes("already registered")) {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
           password: "",
           confirmPassword: "",
@@ -73,7 +77,9 @@ export default function Register() {
             <div className="rounded-md bg-red-50 p-4">
               <div className="flex">
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">{formError}</h3>
+                  <h3 className="text-sm font-medium text-red-800">
+                    {formError}
+                  </h3>
                 </div>
               </div>
             </div>

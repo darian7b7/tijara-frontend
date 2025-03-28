@@ -19,7 +19,7 @@ export interface PaginatedResponse<T> extends APIResponse<PaginatedData<T>> {}
 // Listing related types
 export enum ListingCategory {
   VEHICLES = "VEHICLES",
-  REAL_ESTATE = "REAL_ESTATE"
+  REAL_ESTATE = "REAL_ESTATE",
 }
 
 export enum VehicleType {
@@ -31,14 +31,14 @@ export enum VehicleType {
   CONSTRUCTION = "CONSTRUCTION",
   TRACTORS = "TRACTORS",
   BOATS = "BOATS",
-  OTHER = "OTHER"
+  OTHER = "OTHER",
 }
 
 export enum PropertyType {
   HOUSE = "HOUSE",
   APARTMENT = "APARTMENT",
   LAND = "LAND",
-  OTHER = "OTHER"
+  OTHER = "OTHER",
 }
 
 export enum FuelType {
@@ -46,13 +46,13 @@ export enum FuelType {
   DIESEL = "DIESEL",
   ELECTRIC = "ELECTRIC",
   HYBRID = "HYBRID",
-  OTHER = "OTHER"
+  OTHER = "OTHER",
 }
 
 export enum TransmissionType {
   AUTOMATIC = "AUTOMATIC",
   MANUAL = "MANUAL",
-  SEMI_AUTOMATIC = "SEMI_AUTOMATIC"
+  SEMI_AUTOMATIC = "SEMI_AUTOMATIC",
 }
 
 export enum Condition {
@@ -60,7 +60,7 @@ export enum Condition {
   EXCELLENT = "EXCELLENT",
   GOOD = "GOOD",
   FAIR = "FAIR",
-  POOR = "POOR"
+  POOR = "POOR",
 }
 
 export interface CategoryType {
@@ -143,7 +143,7 @@ export interface ListingFilters {
   location?: string;
   condition?: string;
   sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
 }
 
 export interface ListingUpdateInput {
@@ -166,7 +166,7 @@ export interface ListingParams {
   minPrice?: number;
   maxPrice?: number;
   sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
 }
 
 export interface PaginationParams {
@@ -180,4 +180,4 @@ export interface Favorite {
   listingId: string;
   createdAt: Date;
   listing?: Listing;
-} 
+}

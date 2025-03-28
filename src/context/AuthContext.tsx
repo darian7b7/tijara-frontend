@@ -1,7 +1,12 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthAPI, TokenManager } from "@/api/auth.api";
-import type { AuthState, AuthContextType, AuthResponse, AuthError } from "@/types/auth";
+import type {
+  AuthState,
+  AuthContextType,
+  AuthResponse,
+  AuthError,
+} from "@/types/auth";
 import { toast } from "react-toastify";
 
 const initialState: AuthState = {
@@ -13,7 +18,9 @@ const initialState: AuthState = {
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [state, setState] = useState<AuthState>(initialState);
   const navigate = useNavigate();
   const [retryTimeout, setRetryTimeout] = useState<NodeJS.Timeout | null>(null);
@@ -21,8 +28,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        const hasToken = await TokenManager.initialize();
-        if (!hasToken) {
+        await TokenManager.initialize();
+        const tokens = TokenManager.getStoredTokens();
+        if (!tokens) {
           return setState({ ...initialState, isLoading: false });
         }
 
@@ -43,7 +51,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.warn("Auth init failed:", err.message);
         // Handle rate limiting with exponential backoff
         if (err.status === 429) {
-          const retryAfter = parseInt(err.response?.headers?.['retry-after'] || '60', 10);
+          const retryAfter = parseInt(
+            err.response?.headers?.["retry-after"] || "60",
+            10,
+          );
           if (retryTimeout) {
             clearTimeout(retryTimeout);
           }
@@ -68,7 +79,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const login = async (email: string, password: string): Promise<AuthResponse> => {
+  const login = async (
+    email: string,
+    password: string,
+  ): Promise<AuthResponse> => {
     try {
       const response = await AuthAPI.login({ email, password });
       if (response.success && response.data?.user) {
@@ -92,7 +106,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signup = async (email: string, password: string, username: string): Promise<AuthResponse> => {
+  const signup = async (
+    email: string,
+    password: string,
+    username: string,
+  ): Promise<AuthResponse> => {
     try {
       const response = await AuthAPI.signup({ email, password, username });
       if (response.success && response.data?.user) {

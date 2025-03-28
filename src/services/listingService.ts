@@ -1,8 +1,5 @@
 import axios from "axios";
-import {
-  Listing,
-  ListingFieldSchema,
-} from "@/types/listings";
+import { Listing, ListingFieldSchema } from "@/types/listings";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 

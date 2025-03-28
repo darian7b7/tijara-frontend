@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import type {
-  Listing,
-  Location,
-  ListingUpdateInput,
-} from "@/types/listings";
+import type { Listing, Location, ListingUpdateInput } from "@/types/listings";
 import { listingsAPI } from "@/api/listings.api";
 import FormField from "@/components/listings/create/common/FormField";
 import { Button } from "@/components/ui/Button";
@@ -142,7 +138,10 @@ const EditListing: React.FC = () => {
             type="number"
             value={formData.price.toString()}
             onChange={(value: string | number | boolean | string[]) =>
-              setFormData({ ...formData, price: parseFloat(value as string) || 0 })
+              setFormData({
+                ...formData,
+                price: parseFloat(value as string) || 0,
+              })
             }
             required
           />
@@ -213,7 +212,10 @@ const EditListing: React.FC = () => {
               onChange={(value: string | number | boolean | string[]) =>
                 setFormData({
                   ...formData,
-                  location: { ...formData.location, postalCode: value as string },
+                  location: {
+                    ...formData.location,
+                    postalCode: value as string,
+                  },
                 })
               }
               required

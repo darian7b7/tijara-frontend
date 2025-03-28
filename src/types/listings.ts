@@ -2,47 +2,47 @@
 import type { VehicleType } from "@/components/listings/data/vehicleModels";
 
 export enum ListingCategory {
-  VEHICLES = 'VEHICLES',
-  REAL_ESTATE = 'REAL_ESTATE',
+  VEHICLES = "VEHICLES",
+  REAL_ESTATE = "REAL_ESTATE",
 }
 
 export enum PropertyType {
-  HOUSE = 'HOUSE',
-  APARTMENT = 'APARTMENT',
-  CONDO = 'CONDO',
-  LAND = 'LAND',
-  COMMERCIAL = 'COMMERCIAL',
-  OTHER = 'OTHER',
+  HOUSE = "HOUSE",
+  APARTMENT = "APARTMENT",
+  CONDO = "CONDO",
+  LAND = "LAND",
+  COMMERCIAL = "COMMERCIAL",
+  OTHER = "OTHER",
 }
 
 export enum FuelType {
-  GASOLINE = 'gasoline',
-  DIESEL = 'diesel',
-  ELECTRIC = 'electric',
-  HYBRID = 'hybrid',
-  PLUGIN_HYBRID = 'pluginHybrid',
-  LPG = 'lpg',
-  CNG = 'cng',
-  OTHER = 'other'
+  GASOLINE = "gasoline",
+  DIESEL = "diesel",
+  ELECTRIC = "electric",
+  HYBRID = "hybrid",
+  PLUGIN_HYBRID = "pluginHybrid",
+  LPG = "lpg",
+  CNG = "cng",
+  OTHER = "other",
 }
 
 export enum TransmissionType {
-  AUTOMATIC = 'automatic',
-  MANUAL = 'manual',
-  SEMI_AUTOMATIC = 'semiAutomatic',
-  CONTINUOUSLY_VARIABLE = 'continuouslyVariable',
-  DUAL_CLUTCH = 'dualClutch',
-  OTHER = 'other'
+  AUTOMATIC = "automatic",
+  MANUAL = "manual",
+  SEMI_AUTOMATIC = "semiAutomatic",
+  CONTINUOUSLY_VARIABLE = "continuouslyVariable",
+  DUAL_CLUTCH = "dualClutch",
+  OTHER = "other",
 }
 
 export enum Condition {
-  NEW = 'new',
-  LIKE_NEW = 'likeNew',
-  EXCELLENT = 'excellent',
-  GOOD = 'good',
-  FAIR = 'fair',
-  POOR = 'poor',
-  SALVAGE = 'salvage'
+  NEW = "new",
+  LIKE_NEW = "likeNew",
+  EXCELLENT = "excellent",
+  GOOD = "good",
+  FAIR = "fair",
+  POOR = "poor",
+  SALVAGE = "salvage",
 }
 
 export interface VehicleDetails {
@@ -129,7 +129,7 @@ export interface FormState {
     realEstate?: RealEstateDetails;
   };
   features?: string[];
-  listingAction?: 'sell' | 'rent';
+  listingAction?: "sell" | "rent";
 }
 
 export interface AdvancedDetailsFormProps {
@@ -169,7 +169,7 @@ export interface ListingUpdateInput {
     realEstate?: RealEstateDetails;
   };
   features?: string[];
-  listingAction?: 'sell' | 'rent';
+  listingAction?: "sell" | "rent";
 }
 
 export interface Location {
@@ -201,7 +201,7 @@ export interface ListingFilters {
   maxPrice?: number;
   location?: string;
   sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
 }
 
 export interface ListingParams extends ListingFilters {
@@ -216,7 +216,7 @@ export interface ListingWithRelations extends Listing {
     username: string;
     profilePicture?: string | null;
   };
-  savedBy?: Array<{ id: string; userId: string; }>;
+  savedBy?: Array<{ id: string; userId: string }>;
 }
 
 export interface ListingCreateInput {

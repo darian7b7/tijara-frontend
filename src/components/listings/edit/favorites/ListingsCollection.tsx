@@ -27,7 +27,8 @@ export default function ListingsCollection({ type }: ListingsCollectionProps) {
         } else {
           listingIds = savedListings.map((listing: Listing) => listing.id);
         }
-        const response: PaginatedListingResponse = await listingsAPI.getListingsByIds(listingIds);
+        const response: PaginatedListingResponse =
+          await listingsAPI.getListingsByIds(listingIds);
         if (response.data?.items) {
           setListings(response.data.items);
         }
@@ -43,8 +44,10 @@ export default function ListingsCollection({ type }: ListingsCollectionProps) {
       }
     };
 
-    if ((type === "favorites" && favorites.length > 0) || 
-        (type === "saved" && savedListings.length > 0)) {
+    if (
+      (type === "favorites" && favorites.length > 0) ||
+      (type === "saved" && savedListings.length > 0)
+    ) {
       fetchListings();
     } else {
       setListings([]);
@@ -58,9 +61,7 @@ export default function ListingsCollection({ type }: ListingsCollectionProps) {
 
   if (listings.length === 0) {
     return (
-      <div className="text-center text-gray-500">
-        No {type} listings found
-      </div>
+      <div className="text-center text-gray-500">No {type} listings found</div>
     );
   }
 

@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import { listingsAPI } from '@/api/listings.api';
-import type { Listing, ListingParams, PaginatedData } from '@/types';
+import React, { createContext, useContext, useState, useCallback } from "react";
+import { listingsAPI } from "@/api/listings.api";
+import type { Listing, ListingParams, PaginatedData } from "@/types";
 
 interface ListingsContextType {
   listings: Listing[];
@@ -13,7 +13,9 @@ interface ListingsContextType {
   clearListings: () => void;
 }
 
-const ListingsContext = createContext<ListingsContextType | undefined>(undefined);
+const ListingsContext = createContext<ListingsContextType | undefined>(
+  undefined,
+);
 
 export function ListingsProvider({ children }: { children: React.ReactNode }) {
   const [listings, setListings] = useState<Listing[]>([]);
@@ -28,18 +30,18 @@ export function ListingsProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
       const response = await listingsAPI.getAll(params);
-      
+
       if (params?.page === 1) {
         setListings(response.items);
       } else {
-        setListings(prev => [...prev, ...response.items]);
+        setListings((prev) => [...prev, ...response.items]);
       }
-      
+
       setTotalItems(response.total);
       setCurrentPage(params?.page || 1);
       setHasMore(response.hasMore);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch listings');
+      setError(err instanceof Error ? err.message : "Failed to fetch listings");
     } finally {
       setLoading(false);
     }
@@ -74,7 +76,7 @@ export function ListingsProvider({ children }: { children: React.ReactNode }) {
 export function useListings() {
   const context = useContext(ListingsContext);
   if (context === undefined) {
-    throw new Error('useListings must be used within a ListingsProvider');
+    throw new Error("useListings must be used within a ListingsProvider");
   }
   return context;
 }

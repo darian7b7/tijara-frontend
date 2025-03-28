@@ -1,6 +1,8 @@
 import React from "react";
 import type { SelectOption } from "@/types/common";
-import FormField, { type FormFieldValue } from "@/components/listings/create/common/FormField";
+import FormField, {
+  type FormFieldValue,
+} from "@/components/listings/create/common/FormField";
 import { useTranslation } from "react-i18next";
 import { FuelType, TransmissionType } from "@/types/listings";
 
@@ -51,7 +53,9 @@ const VehicleFilters: React.FC<VehicleFiltersProps> = ({ onFilterChange }) => {
         name="vehicleType"
         label={t("filters.vehicleType")}
         options={vehicleTypeOptions}
-        onChange={(value: FormFieldValue) => onFilterChange("vehicleType", value as string)}
+        onChange={(value: FormFieldValue) =>
+          onFilterChange("vehicleType", value as string)
+        }
       />
 
       <div className="grid grid-cols-2 gap-4">
@@ -60,7 +64,9 @@ const VehicleFilters: React.FC<VehicleFiltersProps> = ({ onFilterChange }) => {
           name="fuelType"
           label={t("filters.fuelType")}
           options={fuelTypeOptions}
-          onChange={(value: FormFieldValue) => onFilterChange("fuelType", value as string)}
+          onChange={(value: FormFieldValue) =>
+            onFilterChange("fuelType", value as string)
+          }
         />
 
         <FormField
@@ -68,7 +74,9 @@ const VehicleFilters: React.FC<VehicleFiltersProps> = ({ onFilterChange }) => {
           name="transmission"
           label={t("filters.transmission")}
           options={transmissionOptions}
-          onChange={(value: FormFieldValue) => onFilterChange("transmission", value as string)}
+          onChange={(value: FormFieldValue) =>
+            onFilterChange("transmission", value as string)
+          }
         />
       </div>
 
@@ -77,14 +85,18 @@ const VehicleFilters: React.FC<VehicleFiltersProps> = ({ onFilterChange }) => {
           type="number"
           name="minPrice"
           label={t("filters.minPrice")}
-          onChange={(value: FormFieldValue) => onFilterChange("minPrice", Number(value))}
+          onChange={(value: FormFieldValue) =>
+            onFilterChange("minPrice", Number(value))
+          }
         />
 
         <FormField
           type="number"
           name="maxPrice"
           label={t("filters.maxPrice")}
-          onChange={(value: FormFieldValue) => onFilterChange("maxPrice", Number(value))}
+          onChange={(value: FormFieldValue) =>
+            onFilterChange("maxPrice", Number(value))
+          }
         />
       </div>
 
@@ -93,14 +105,18 @@ const VehicleFilters: React.FC<VehicleFiltersProps> = ({ onFilterChange }) => {
           type="number"
           name="minYear"
           label={t("filters.minYear")}
-          onChange={(value: FormFieldValue) => onFilterChange("minYear", Number(value))}
+          onChange={(value: FormFieldValue) =>
+            onFilterChange("minYear", Number(value))
+          }
         />
 
         <FormField
           type="number"
           name="maxYear"
           label={t("filters.maxYear")}
-          onChange={(value: FormFieldValue) => onFilterChange("maxYear", Number(value))}
+          onChange={(value: FormFieldValue) =>
+            onFilterChange("maxYear", Number(value))
+          }
         />
       </div>
     </div>

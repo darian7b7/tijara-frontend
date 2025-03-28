@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Listing } from '@/types/listings';
-import { listingsAPI } from '@/api/listings.api';
+import { useState, useEffect } from "react";
+import { Listing } from "@/types/listings";
+import { listingsAPI } from "@/api/listings.api";
 
 interface SavedListingsResponse {
   success: boolean;
@@ -22,12 +22,15 @@ export function useSavedListings() {
     const fetchSavedListings = async () => {
       try {
         setIsLoading(true);
-        const response = await listingsAPI.getSavedListings() as SavedListingsResponse;
+        const response =
+          (await listingsAPI.getSavedListings()) as SavedListingsResponse;
         if (response.data?.items) {
           setSavedListings(response.data.items);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch saved listings');
+        setError(
+          err instanceof Error ? err.message : "Failed to fetch saved listings",
+        );
       } finally {
         setIsLoading(false);
       }

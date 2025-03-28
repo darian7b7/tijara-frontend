@@ -7,7 +7,18 @@ export type FormFieldValue = string | number | boolean | string[];
 export interface FormFieldProps {
   label?: string;
   name: string;
-  type?: "text" | "number" | "email" | "password" | "tel" | "textarea" | "select" | "checkbox" | "date" | "multiselect" | "colorpicker";
+  type?:
+    | "text"
+    | "number"
+    | "email"
+    | "password"
+    | "tel"
+    | "textarea"
+    | "select"
+    | "checkbox"
+    | "date"
+    | "multiselect"
+    | "colorpicker";
   value?: FormFieldValue;
   onChange: (value: FormFieldValue) => void;
   error?: string;
@@ -262,11 +273,7 @@ const FormField = forwardRef<
             value={value as string}
             onChange={handleChange}
             onBlur={handleBlur}
-            className={clsx(
-              inputClasses,
-              prefix && "pl-7",
-              suffix && "pr-7",
-            )}
+            className={clsx(inputClasses, prefix && "pl-7", suffix && "pr-7")}
             disabled={disabled}
             placeholder={placeholder}
             required={required}
@@ -303,9 +310,7 @@ const FormField = forwardRef<
           </label>
         )}
         {renderInput()}
-        {helpText && (
-          <p className="mt-1 text-sm text-gray-500">{helpText}</p>
-        )}
+        {helpText && <p className="mt-1 text-sm text-gray-500">{helpText}</p>}
         {error && (
           <p className="mt-1 text-sm text-red-600" role="alert">
             {error}

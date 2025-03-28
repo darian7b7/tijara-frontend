@@ -23,22 +23,22 @@ const MyListings = () => {
 
     try {
       setLoading(true);
-      const response = await apiClient.get<ListingsResponse>('/listings/my', {
+      const response = await apiClient.get<ListingsResponse>("/listings/my", {
         params: {
           page,
-          limit
-        }
+          limit,
+        },
       });
-      
+
       if (page === 1) {
         setListings(response.data.listings);
       } else {
-        setListings(prev => [...prev, ...response.data.listings]);
+        setListings((prev) => [...prev, ...response.data.listings]);
       }
       setHasMore(response.data.listings.length === limit);
       setError(null);
     } catch (err) {
-      setError(t('errors.failedToFetchListings'));
+      setError(t("errors.failedToFetchListings"));
     } finally {
       setLoading(false);
     }
@@ -50,7 +50,7 @@ const MyListings = () => {
 
   const loadMore = () => {
     if (!loading && hasMore) {
-      setPage(p => p + 1);
+      setPage((p) => p + 1);
     }
   };
 
@@ -83,7 +83,9 @@ const MyListings = () => {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-bold">{t('profile.myListings')} ({listings.length})</h2>
+      <h2 className="text-2xl font-bold">
+        {t("profile.myListings")} ({listings.length})
+      </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {listings.map((listing) => (
           <ListingCard
@@ -95,18 +97,18 @@ const MyListings = () => {
           />
         ))}
       </div>
-      {loading && <div className="text-center">{t('common.loading')}</div>}
+      {loading && <div className="text-center">{t("common.loading")}</div>}
       {!loading && hasMore && (
         <button
           onClick={loadMore}
           className="w-full py-2 text-center text-blue-600 hover:text-blue-800"
         >
-          {t('common.loadMore')}
+          {t("common.loadMore")}
         </button>
       )}
       {!loading && !hasMore && listings.length === 0 && (
         <div className="text-center text-gray-500">
-          {t('profile.noListings')}
+          {t("profile.noListings")}
         </div>
       )}
     </div>

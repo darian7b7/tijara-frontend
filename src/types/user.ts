@@ -36,7 +36,7 @@ export interface UserSettings {
 
 export interface UserPreferences {
   language: string;
-  theme: 'light' | 'dark';
+  theme: "light" | "dark";
   notifications: {
     enabledTypes: string[];
     emailNotifications: boolean;

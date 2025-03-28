@@ -47,7 +47,9 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
         name="propertyType"
         label={t("filters.propertyType")}
         options={propertyTypeOptions}
-        onChange={(value: FormFieldValue) => onFilterChange("propertyType", value as string)}
+        onChange={(value: FormFieldValue) =>
+          onFilterChange("propertyType", value as string)
+        }
       />
 
       <div className="grid grid-cols-2 gap-4">
@@ -56,7 +58,9 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
           name="bedrooms"
           label={t("filters.bedrooms")}
           options={bedroomOptions}
-          onChange={(value: FormFieldValue) => onFilterChange("bedrooms", value as string)}
+          onChange={(value: FormFieldValue) =>
+            onFilterChange("bedrooms", value as string)
+          }
         />
 
         <FormField
@@ -64,7 +68,9 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
           name="bathrooms"
           label={t("filters.bathrooms")}
           options={bathroomOptions}
-          onChange={(value: FormFieldValue) => onFilterChange("bathrooms", value as string)}
+          onChange={(value: FormFieldValue) =>
+            onFilterChange("bathrooms", value as string)
+          }
         />
       </div>
 
@@ -73,14 +79,18 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
           type="number"
           name="minPrice"
           label={t("filters.minPrice")}
-          onChange={(value: FormFieldValue) => onFilterChange("minPrice", Number(value))}
+          onChange={(value: FormFieldValue) =>
+            onFilterChange("minPrice", Number(value))
+          }
         />
 
         <FormField
           type="number"
           name="maxPrice"
           label={t("filters.maxPrice")}
-          onChange={(value: FormFieldValue) => onFilterChange("maxPrice", Number(value))}
+          onChange={(value: FormFieldValue) =>
+            onFilterChange("maxPrice", Number(value))
+          }
         />
       </div>
     </div>

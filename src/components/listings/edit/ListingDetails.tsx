@@ -2,11 +2,7 @@ import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { MessagesAPI } from "@/api/messaging.api";
-import {
-  Listing,
-  ListingCategory,
-  VehicleDetails,
-} from "@/types/listings";
+import { Listing, ListingCategory, VehicleDetails } from "@/types/listings";
 import type { ListingMessageInput } from "@/types/messaging";
 import { toast } from "react-toastify";
 import { listingsAPI } from "@/api/listings.api";
@@ -78,7 +74,9 @@ const ListingDetails: React.FC<ListingDetailsProps> = ({ listing }) => {
   }
 
   const isVehicle = listing.category.mainCategory === ListingCategory.VEHICLES;
-  const vehicleDetails = isVehicle ? (listing.details?.vehicles as VehicleDetails) : null;
+  const vehicleDetails = isVehicle
+    ? (listing.details?.vehicles as VehicleDetails)
+    : null;
 
   return (
     <div className="container mx-auto px-4 py-8">

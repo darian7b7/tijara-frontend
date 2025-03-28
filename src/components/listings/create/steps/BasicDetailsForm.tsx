@@ -39,7 +39,18 @@ interface BasicDetailsFormProps {
 interface ListingFieldSchema {
   name: string;
   label: string;
-  type: "text" | "number" | "select" | "textarea" | "checkbox" | "date" | "colorpicker" | "multiselect" | "email" | "password" | "tel";
+  type:
+    | "text"
+    | "number"
+    | "select"
+    | "textarea"
+    | "checkbox"
+    | "date"
+    | "colorpicker"
+    | "multiselect"
+    | "email"
+    | "password"
+    | "tel";
   required?: boolean;
   options?: string[];
   placeholder?: string;
@@ -53,12 +64,20 @@ const formAnimations = { opacity: 1 };
 // Vehicle subcategories with proper type safety
 const vehicleSubcategories = [
   { value: VehicleType.CAR, label: "Cars", icon: <FaCar /> },
-  { value: VehicleType.MOTORCYCLE, label: "Motorcycles", icon: <FaMotorcycle /> },
+  {
+    value: VehicleType.MOTORCYCLE,
+    label: "Motorcycles",
+    icon: <FaMotorcycle />,
+  },
   { value: VehicleType.TRUCK, label: "Trucks", icon: <FaTruck /> },
   { value: VehicleType.VAN, label: "Vans", icon: <FaShuttleVan /> },
   { value: VehicleType.BUS, label: "Buses", icon: <FaBus /> },
   { value: VehicleType.TRACTOR, label: "Tractors", icon: <FaTractor /> },
-  { value: VehicleType.CONSTRUCTION, label: "Construction", icon: <FaTruckPickup /> },
+  {
+    value: VehicleType.CONSTRUCTION,
+    label: "Construction",
+    icon: <FaTruckPickup />,
+  },
 ] as const;
 
 // Real estate subcategories with proper type safety
@@ -66,8 +85,16 @@ const realEstateSubcategories = [
   { value: PropertyType.HOUSE, label: "Houses", icon: <BiBuildingHouse /> },
   { value: PropertyType.APARTMENT, label: "Apartments", icon: <BiBuildings /> },
   { value: PropertyType.LAND, label: "Land", icon: <BiLandscape /> },
-  { value: PropertyType.COMMERCIAL, label: "Commercial", icon: <BiBuildings /> },
-  { value: PropertyType.INDUSTRIAL, label: "Industrial", icon: <BiBuildings /> },
+  {
+    value: PropertyType.COMMERCIAL,
+    label: "Commercial",
+    icon: <BiBuildings />,
+  },
+  {
+    value: PropertyType.INDUSTRIAL,
+    label: "Industrial",
+    icon: <BiBuildings />,
+  },
 ] as const;
 
 const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
@@ -272,7 +299,18 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
   };
 
   // Update type definition for form field types
-  type FormFieldType = "text" | "number" | "select" | "textarea" | "checkbox" | "date" | "colorpicker" | "multiselect" | "email" | "password" | "tel";
+  type FormFieldType =
+    | "text"
+    | "number"
+    | "select"
+    | "textarea"
+    | "checkbox"
+    | "date"
+    | "colorpicker"
+    | "multiselect"
+    | "email"
+    | "password"
+    | "tel";
 
   // Fixed renderFormField to handle nested objects with proper type safety
   const renderFormField = (
@@ -339,7 +377,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
       <div className="space-y-6">
         {fields.map((field: ListingFieldSchema) => {
           const fieldValue = formData.details?.vehicles?.[field.name];
-          
+
           // Handle numeric values
           let processedValue: string | number = fieldValue || "";
           if (field.type === "number" && fieldValue) {
@@ -358,7 +396,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
           } else if (field.name === "model" && makeValue) {
             options = getModelsForMakeAndType(
               makeValue,
-              mapEnumToModelType(formData.category.subCategory as VehicleType)
+              mapEnumToModelType(formData.category.subCategory as VehicleType),
             );
           }
 
@@ -869,7 +907,7 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
         ...prev.details,
         vehicles: {
           ...prev.details.vehicles,
-          [field]: field === 'year' ? Number(value) : value,
+          [field]: field === "year" ? Number(value) : value,
         },
       },
     }));
@@ -925,12 +963,14 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
                     )
                   }
                   className={`px-4 py-2 text-sm font-medium rounded-r-md focus:outline-none focus:z-10 ${
-                    formData.category.mainCategory === ListingCategory.REAL_ESTATE
+                    formData.category.mainCategory ===
+                    ListingCategory.REAL_ESTATE
                       ? "bg-green-500 text-white"
                       : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
                   }`}
                   aria-pressed={
-                    formData.category.mainCategory === ListingCategory.REAL_ESTATE
+                    formData.category.mainCategory ===
+                    ListingCategory.REAL_ESTATE
                   }
                 >
                   <BiBuildingHouse className="inline-block mr-2 -mt-1" />
@@ -961,7 +1001,9 @@ const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
               t("titlePlaceholder"),
               undefined,
               undefined,
-              makeValue && modelValue ? t("autoGeneratedFromDetails") : undefined,
+              makeValue && modelValue
+                ? t("autoGeneratedFromDetails")
+                : undefined,
             )}
 
             {/* Render category-specific fields */}

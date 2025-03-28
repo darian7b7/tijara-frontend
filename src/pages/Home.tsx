@@ -22,7 +22,9 @@ const Home = () => {
   );
   const [listings, setListings] = useState<ListingWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
-  const [trendingListings, setTrendingListings] = useState<ListingWithRelations[]>([]);
+  const [trendingListings, setTrendingListings] = useState<
+    ListingWithRelations[]
+  >([]);
   const [listingsError, setListingsError] = useState<string | null>(null);
   const [isServerOnline, setIsServerOnline] = useState(true);
   const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
@@ -90,10 +92,10 @@ const Home = () => {
     try {
       setLoading(true);
       const response = await listingsAPI.search(query);
-      
+
       if (response.success && response.data) {
         setListings(response.data.items || []);
-        
+
         if (!response.data.items || response.data.items.length === 0) {
           setListingsError(t("errors.no_search_results"));
         } else {

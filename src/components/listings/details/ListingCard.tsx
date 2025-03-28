@@ -33,16 +33,17 @@ const ListingCard: React.FC<ListingCardProps> = ({
   onEdit,
   onDelete,
 }) => {
-  const { favorites, toggleFavorite } = useFavorites() as unknown as FavoritesHook;
-  const { savedListings, toggleSaved } = useSavedListings() as unknown as SavedListingsHook;
+  const { favorites, toggleFavorite } =
+    useFavorites() as unknown as FavoritesHook;
+  const { savedListings, toggleSaved } =
+    useSavedListings() as unknown as SavedListingsHook;
 
   const isFavorite = favorites.includes(listing.id);
   const isSaved = savedListings.includes(listing.id);
   const location = listing.location as Location;
 
-  const mainImage = listing.images && listing.images.length > 0 
-    ? listing.images[0]
-    : undefined;
+  const mainImage =
+    listing.images && listing.images.length > 0 ? listing.images[0] : undefined;
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">

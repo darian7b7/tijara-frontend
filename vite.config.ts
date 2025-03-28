@@ -2,8 +2,8 @@ import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 import { fileURLToPath } from "url";
-import tailwindcss from 'tailwindcss';
-import autoprefixer from 'autoprefixer';
+import tailwindcss from "tailwindcss";
+import autoprefixer from "autoprefixer";
 
 // Polyfill __dirname for ESM
 const __filename = fileURLToPath(import.meta.url);
@@ -11,15 +11,15 @@ const __dirname = path.dirname(__filename);
 
 export default defineConfig(({ mode }) => {
   // Load env file based on mode
-  const env = loadEnv(mode, process.cwd(), '');
-  const apiUrl = env.VITE_API_URL || 'http://localhost:5001/api';
-  const apiTimeout = parseInt(env.VITE_API_TIMEOUT || '10000');
+  const env = loadEnv(mode, process.cwd(), "");
+  const apiUrl = env.VITE_API_URL || "http://localhost:5001/api";
+  const apiTimeout = parseInt(env.VITE_API_TIMEOUT || "10000");
 
   return {
     plugins: [react()],
     server: {
-      port: parseInt(env.VITE_PORT || '3000'),
-      open: env.VITE_OPEN_BROWSER === 'true',
+      port: parseInt(env.VITE_PORT || "3000"),
+      open: env.VITE_OPEN_BROWSER === "true",
       strictPort: false,
       cors: {
         origin: true,
@@ -31,17 +31,25 @@ export default defineConfig(({ mode }) => {
         "/api": {
           target: apiUrl,
           changeOrigin: true,
-          secure: mode === 'production',
-          rewrite: (path) => path.replace(/^\/api/, ''),
+          secure: mode === "production",
+          rewrite: (path) => path.replace(/^\/api/, ""),
           configure: (proxy, options) => {
-            proxy.on('error', (err, _req, _res) => {
-              console.warn('proxy error', err);
+            proxy.on("error", (err, _req, _res) => {
+              console.warn("proxy error", err);
             });
-            proxy.on('proxyReq', (proxyReq, req, _res) => {
-              console.log('Sending Request to the Target:', req.method, req.url);
+            proxy.on("proxyReq", (proxyReq, req, _res) => {
+              console.log(
+                "Sending Request to the Target:",
+                req.method,
+                req.url,
+              );
             });
-            proxy.on('proxyRes', (proxyRes, req, _res) => {
-              console.log('Received Response from the Target:', proxyRes.statusCode, req.url);
+            proxy.on("proxyRes", (proxyRes, req, _res) => {
+              console.log(
+                "Received Response from the Target:",
+                proxyRes.statusCode,
+                req.url,
+              );
             });
           },
         },
@@ -49,15 +57,15 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       outDir: env.VITE_BUILD_DIR || "dist",
-      sourcemap: mode !== 'production',
-      minify: mode === 'production',
+      sourcemap: mode !== "production",
+      minify: mode === "production",
       rollupOptions: {
         input: {
-          main: path.resolve(__dirname, 'index.html'),
+          main: path.resolve(__dirname, "index.html"),
         },
         output: {
           manualChunks: {
-            vendor: ['react', 'react-dom', 'react-router-dom'],
+            vendor: ["react", "react-dom", "react-router-dom"],
             ui: [],
           },
         },
@@ -65,15 +73,12 @@ export default defineConfig(({ mode }) => {
     },
     css: {
       postcss: {
-        plugins: [
-          tailwindcss(),
-          autoprefixer(),
-        ],
+        plugins: [tailwindcss(), autoprefixer()],
       },
     },
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, './src'),
+        "@": path.resolve(__dirname, "./src"),
         "@types": path.resolve(__dirname, "src/types"),
         "@api": path.resolve(__dirname, "src/api"),
         "@assets": path.resolve(__dirname, "src/assets"),
@@ -86,7 +91,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     optimizeDeps: {
-      include: ['react', 'react-dom', 'react-router-dom'],
+      include: ["react", "react-dom", "react-router-dom"],
     },
     esbuild: {
       logOverride: {

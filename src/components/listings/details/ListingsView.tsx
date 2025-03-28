@@ -108,7 +108,9 @@ export const ListingComponent: React.FC<ListingComponentProps> = ({
     );
   }
 
-  const ListingCard: React.FC<{ listing: ListingWithRelations }> = ({ listing }) => (
+  const ListingCard: React.FC<{ listing: ListingWithRelations }> = ({
+    listing,
+  }) => (
     <div
       key={listing.id}
       className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200"

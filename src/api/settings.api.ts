@@ -88,28 +88,34 @@ interface UserSettings {
 
 export const getUserSettings = async (): Promise<APIResponse<UserSettings>> => {
   try {
-    const response = await apiClient.get<APIResponse<UserSettings>>('/user/settings');
+    const response =
+      await apiClient.get<APIResponse<UserSettings>>("/user/settings");
     return response.data;
   } catch (error: any) {
     return {
       success: false,
-      error: error.response?.data?.message || 'Failed to fetch settings',
+      error: error.response?.data?.message || "Failed to fetch settings",
       status: error.response?.status || 500,
-      data: null
+      data: null,
     };
   }
 };
 
-export const updateUserSettings = async (preferences: UserPreferences): Promise<APIResponse<UserSettings>> => {
+export const updateUserSettings = async (
+  preferences: UserPreferences,
+): Promise<APIResponse<UserSettings>> => {
   try {
-    const response = await apiClient.post<APIResponse<UserSettings>>('/user/settings', { preferences });
+    const response = await apiClient.post<APIResponse<UserSettings>>(
+      "/user/settings",
+      { preferences },
+    );
     return response.data;
   } catch (error: any) {
     return {
       success: false,
-      error: error.response?.data?.message || 'Failed to update settings',
+      error: error.response?.data?.message || "Failed to update settings",
       status: error.response?.status || 500,
-      data: null
+      data: null,
     };
   }
 };

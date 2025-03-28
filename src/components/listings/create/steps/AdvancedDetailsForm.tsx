@@ -31,7 +31,18 @@ interface ExtendedFormState extends FormState {
 }
 
 // Update type definition for form field types
-type FormFieldType = "text" | "number" | "select" | "textarea" | "checkbox" | "date" | "colorpicker" | "multiselect" | "email" | "password" | "tel";
+type FormFieldType =
+  | "text"
+  | "number"
+  | "select"
+  | "textarea"
+  | "checkbox"
+  | "date"
+  | "colorpicker"
+  | "multiselect"
+  | "email"
+  | "password"
+  | "tel";
 
 const AdvancedDetailsForm: React.FC<AdvancedDetailsFormProps> = ({
   initialData,
@@ -40,7 +51,7 @@ const AdvancedDetailsForm: React.FC<AdvancedDetailsFormProps> = ({
 }) => {
   const { t } = useTranslation();
   const [formData, setFormData] = useState<ExtendedFormState>(
-    initialData as ExtendedFormState
+    initialData as ExtendedFormState,
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [activeSection, setActiveSection] = useState("essential");
@@ -69,7 +80,7 @@ const AdvancedDetailsForm: React.FC<AdvancedDetailsFormProps> = ({
 
   const handleInputChange = (
     field: string,
-    value: string | number | boolean | string[]
+    value: string | number | boolean | string[],
   ) => {
     setFormData((prev) => {
       const newFormData = { ...prev };
@@ -99,7 +110,7 @@ const AdvancedDetailsForm: React.FC<AdvancedDetailsFormProps> = ({
   const renderFields = () => {
     const fields = listingsAdvancedFieldSchema[categoryType] || [];
     const sectionFields = fields.filter(
-      (field) => field.section === activeSection
+      (field) => field.section === activeSection,
     );
 
     return (
@@ -154,7 +165,11 @@ const AdvancedDetailsForm: React.FC<AdvancedDetailsFormProps> = ({
         }
       }
 
-      if (value && field.type === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      if (
+        value &&
+        field.type === "email" &&
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+      ) {
         newErrors[`details.${field.name}`] = t("invalidEmail");
       }
     });

@@ -36,7 +36,7 @@ export const ProfileInfo = () => {
         if (response.success && response.data) {
           setFormData((prev) => ({
             ...prev,
-            settings: response.data
+            settings: response.data,
           }));
         }
       } catch (error) {
@@ -60,16 +60,18 @@ export const ProfileInfo = () => {
   };
 
   const handleSettingsChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value, type } = e.target;
-    const isCheckbox = type === 'checkbox';
-    const newValue = isCheckbox ? (e.target as HTMLInputElement).checked : value;
+    const isCheckbox = type === "checkbox";
+    const newValue = isCheckbox
+      ? (e.target as HTMLInputElement).checked
+      : value;
 
     setFormData((prev) => {
       if (!prev.settings) return prev;
 
-      const [category, setting] = name.split('.');
+      const [category, setting] = name.split(".");
       return {
         ...prev,
         settings: {
@@ -77,11 +79,13 @@ export const ProfileInfo = () => {
           preferences: {
             ...prev.settings.preferences,
             [category]: {
-              ...(prev.settings.preferences[category as keyof UserPreferences] as any),
-              [setting]: newValue
-            }
-          }
-        }
+              ...(prev.settings.preferences[
+                category as keyof UserPreferences
+              ] as any),
+              [setting]: newValue,
+            },
+          },
+        },
       };
     });
   };
@@ -108,17 +112,23 @@ export const ProfileInfo = () => {
 
       const profileResponse = await UserAPI.updateProfile(formDataToSend);
       if (!profileResponse.success) {
-        throw new Error(typeof profileResponse.error === 'string' 
-          ? profileResponse.error 
-          : "Failed to update profile");
+        throw new Error(
+          typeof profileResponse.error === "string"
+            ? profileResponse.error
+            : "Failed to update profile",
+        );
       }
 
       if (formData.settings) {
-        const settingsResponse = await UserAPI.updateSettings(formData.settings);
+        const settingsResponse = await UserAPI.updateSettings(
+          formData.settings,
+        );
         if (!settingsResponse.success) {
-          throw new Error(typeof settingsResponse.error === 'string' 
-            ? settingsResponse.error 
-            : "Failed to update settings");
+          throw new Error(
+            typeof settingsResponse.error === "string"
+              ? settingsResponse.error
+              : "Failed to update settings",
+          );
         }
       }
 
@@ -221,11 +231,16 @@ export const ProfileInfo = () => {
                 id="emailNotifications"
                 type="checkbox"
                 name="notifications.emailNotifications"
-                checked={formData.settings.preferences.notifications.emailNotifications}
+                checked={
+                  formData.settings.preferences.notifications.emailNotifications
+                }
                 onChange={handleSettingsChange}
                 className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
-              <label htmlFor="emailNotifications" className="text-sm text-gray-700">
+              <label
+                htmlFor="emailNotifications"
+                className="text-sm text-gray-700"
+              >
                 {t("profile.email_notifications")}
               </label>
             </div>
@@ -235,7 +250,9 @@ export const ProfileInfo = () => {
                 id="newMessages"
                 type="checkbox"
                 name="emailPreferences.newMessages"
-                checked={formData.settings.preferences.emailPreferences.newMessages}
+                checked={
+                  formData.settings.preferences.emailPreferences.newMessages
+                }
                 onChange={handleSettingsChange}
                 className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
@@ -249,7 +266,9 @@ export const ProfileInfo = () => {
                 id="listingUpdates"
                 type="checkbox"
                 name="emailPreferences.listingUpdates"
-                checked={formData.settings.preferences.emailPreferences.listingUpdates}
+                checked={
+                  formData.settings.preferences.emailPreferences.listingUpdates
+                }
                 onChange={handleSettingsChange}
                 className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
@@ -263,7 +282,9 @@ export const ProfileInfo = () => {
                 id="promotions"
                 type="checkbox"
                 name="emailPreferences.promotions"
-                checked={formData.settings.preferences.emailPreferences.promotions}
+                checked={
+                  formData.settings.preferences.emailPreferences.promotions
+                }
                 onChange={handleSettingsChange}
                 className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />

@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import type { Listing, ListingCategory, APIResponse, PaginatedData } from "@/types/shared";
+import type {
+  Listing,
+  ListingCategory,
+  APIResponse,
+  PaginatedData,
+} from "@/types/shared";
 import ListingCard from "@/components/listings/details/ListingCard";
 import { SearchBar } from "@/components/ui/SearchBar";
 import { listingsAPI } from "@/api/listings.api";
@@ -23,9 +28,7 @@ const CategoryPage: React.FC = () => {
           ? await listingsAPI.search(searchQuery, {
               category: category as string,
             })
-          : await listingsAPI.getListingsByCategory(
-              category as string,
-            );
+          : await listingsAPI.getListingsByCategory(category as string);
 
         if (response.success && response.data) {
           setListings(response.data.items);

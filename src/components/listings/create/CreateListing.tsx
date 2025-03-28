@@ -2,7 +2,13 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { ListingCategory, FuelType, TransmissionType, Condition, FormState } from "@/types/listings";
+import {
+  ListingCategory,
+  FuelType,
+  TransmissionType,
+  Condition,
+  FormState,
+} from "@/types/listings";
 import BasicDetailsForm from "./steps/BasicDetailsForm";
 import AdvancedDetailsForm from "./steps/AdvancedDetailsForm";
 import ReviewSection from "./steps/ReviewSection";
@@ -62,12 +68,16 @@ const CreateListing: React.FC<CreateListingProps> = ({ onSubmit }) => {
     setStep((prev) => prev - 1);
   };
 
-  const handleBasicDetailsSubmit = async (data: FormState, isValid: boolean) => {
+  const handleBasicDetailsSubmit = async (
+    data: FormState,
+    isValid: boolean,
+  ) => {
     if (isValid) {
       setFormData((prev) => ({
         ...prev,
         ...data,
-        price: typeof data.price === 'string' ? parseFloat(data.price) : data.price
+        price:
+          typeof data.price === "string" ? parseFloat(data.price) : data.price,
       }));
       setStep((prev) => prev + 1);
     }
@@ -106,17 +116,20 @@ const CreateListing: React.FC<CreateListingProps> = ({ onSubmit }) => {
 
       const formData = new FormData();
       Object.entries(data).forEach(([key, value]) => {
-        if (key !== 'images' && value !== undefined) {
-          formData.append(key, typeof value === 'string' ? value : JSON.stringify(value));
+        if (key !== "images" && value !== undefined) {
+          formData.append(
+            key,
+            typeof value === "string" ? value : JSON.stringify(value),
+          );
         }
       });
 
       // Handle images
       data.images.forEach((image) => {
         if (image instanceof File) {
-          formData.append('images', image);
-        } else if (typeof image === 'string') {
-          formData.append('imageUrls[]', image);
+          formData.append("images", image);
+        } else if (typeof image === "string") {
+          formData.append("imageUrls[]", image);
         }
       });
 
@@ -124,7 +137,9 @@ const CreateListing: React.FC<CreateListingProps> = ({ onSubmit }) => {
       toast.success(t("listingCreatedSuccessfully"));
       setStep(1);
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Error creating listing");
+      setError(
+        error instanceof Error ? error.message : "Error creating listing",
+      );
       toast.error(t("errorCreatingListing"));
     } finally {
       setIsSubmitting(false);
