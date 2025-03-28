@@ -1,66 +1,28 @@
-// src/api/apiClient.ts
+import axios from "axios";
 
-import axios, { AxiosInstance, InternalAxiosRequestConfig } from "axios";
-import { API_BASE_URL } from "@/config";
+const baseURL = import.meta.env.VITE_API_URL;
 
-console.log('Creating API client with base URL:', API_BASE_URL);
-
-const apiClient: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL,
+const apiClient = axios.create({
+  baseURL,
   timeout: 10000,
-  withCredentials: true, // Important for CORS with credentials
   headers: {
     "Content-Type": "application/json",
-    "Accept": "application/json"
   },
 });
 
-apiClient.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    const url = `${config.baseURL || ''}${config.url || ''}`;
-    console.log('Making request to:', url);
-    console.log('Request data:', config.data);
-    
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    console.error('Request error:', error);
-    return Promise.reject(error);
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-);
+  return config;
+});
 
 apiClient.interceptors.response.use(
-  (response) => {
-    console.log('Response:', {
-      status: response.status,
-      url: response.config?.url,
-      data: response.data
-    });
-    return response;
-  },
+  (response) => response,
   (error) => {
-    console.error('Response error:', {
-      status: error.response?.status,
-      url: error.config?.url,
-      data: error.response?.data,
-      message: error.message,
-      details: error.response?.data?.message || error.message
-    });
-    
-    // Format error response consistently
-    const errorResponse = {
-      success: false,
-      error: error.response?.data?.message || error.message || 'Request failed',
-      errors: error.response?.data?.errors || [],
-      status: error.response?.status || 500,
-      data: null
-    };
-
-    return Promise.reject(errorResponse);
+    console.error("Response error:", error.response);
+    return Promise.reject(error.response);
   }
 );
 
