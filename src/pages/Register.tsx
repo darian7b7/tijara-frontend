@@ -20,18 +20,21 @@ const Register: React.FC = () => {
     confirmPassword: "",
   });
   const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormError(null);
     if (authError) clearError();
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
+    setFormError(null);
 
     if (formData.password !== formData.confirmPassword) {
-      toast.error("Passwords do not match");
+      setFormError("Passwords do not match");
       setLoading(false);
       return;
     }
@@ -48,12 +51,12 @@ const Register: React.FC = () => {
         toast.success("Registration successful!");
         navigate("/");
       } else {
-        const errorMessage = response.errors?.[0]?.msg || response.error || "Registration failed";
-        toast.error(errorMessage);
+        const errorMessage = response.error || "Registration failed";
+        setFormError(errorMessage);
       }
     } catch (error: any) {
       console.error("Registration error:", error);
-      toast.error(error.message || "Registration failed");
+      setFormError(error.error || error.message || "Registration failed");
     } finally {
       setLoading(false);
     }
@@ -69,13 +72,19 @@ const Register: React.FC = () => {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-gray-800 py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          {formError && (
+            <div className="mb-4 bg-red-500 text-white px-4 py-3 rounded relative" role="alert">
+              <span className="block sm:inline">{formError}</span>
+            </div>
+          )}
+
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label
                 htmlFor="username"
                 className="block text-sm font-medium text-gray-300"
               >
-                Full Name
+                Username
               </label>
               <div className="mt-1">
                 <input
