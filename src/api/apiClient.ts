@@ -12,8 +12,34 @@ const apiClient = axios.create({
   withCredentials: true,
 });
 
+// Define route prefixes
+const ROUTES = {
+  auth: '/auth',
+  listings: '/listings',
+  users: '/users',
+  messages: '/messages',
+  uploads: '/uploads',
+  notifications: '/notifications'
+};
+
+// Update API endpoints to use correct route prefixes
 apiClient.interceptors.request.use(
   (config) => {
+    // Add route prefix based on endpoint
+    if (config.url?.startsWith('/auth')) {
+      config.url = ROUTES.auth + config.url.replace('/auth', '');
+    } else if (config.url?.startsWith('/listings')) {
+      config.url = ROUTES.listings + config.url.replace('/listings', '');
+    } else if (config.url?.startsWith('/users')) {
+      config.url = ROUTES.users + config.url.replace('/users', '');
+    } else if (config.url?.startsWith('/messages')) {
+      config.url = ROUTES.messages + config.url.replace('/messages', '');
+    } else if (config.url?.startsWith('/uploads')) {
+      config.url = ROUTES.uploads + config.url.replace('/uploads', '');
+    } else if (config.url?.startsWith('/notifications')) {
+      config.url = ROUTES.notifications + config.url.replace('/notifications', '');
+    }
+
     const tokens = JSON.parse(localStorage.getItem("auth_tokens") || "null");
     if (tokens?.accessToken) {
       config.headers.Authorization = `Bearer ${tokens.accessToken}`;
