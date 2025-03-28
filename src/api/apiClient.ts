@@ -11,9 +11,9 @@ const apiClient = axios.create({
   withCredentials: true,
 });
 
-// Remove /api from route prefixes since it's already in the URL
+// Define route prefixes WITHOUT /api
 const ROUTES = {
-  auth: "/auth",          // Remove /api prefix
+  auth: "/auth",
   listings: "/listings",
   users: "/users",
   messages: "/messages",
@@ -31,24 +31,23 @@ apiClient.interceptors.request.use(
       baseURL: config.baseURL,
     });
 
-    // Add /api prefix to all routes if not already present
-    if (!config.url?.startsWith('/api')) {
-      config.url = `/api${config.url}`;
-    }
-
-    // Now handle the specific route prefixes
-    if (config.url?.includes("/auth")) {
-      config.url = config.url.replace("/auth", ROUTES.auth);
-    } else if (config.url?.includes("/listings")) {
-      config.url = config.url.replace("/listings", ROUTES.listings);
-    } else if (config.url?.includes("/users")) {
-      config.url = config.url.replace("/users", ROUTES.users);
-    } else if (config.url?.includes("/messages")) {
-      config.url = config.url.replace("/messages", ROUTES.messages);
-    } else if (config.url?.includes("/uploads")) {
-      config.url = config.url.replace("/uploads", ROUTES.uploads);
-    } else if (config.url?.includes("/notifications")) {
-      config.url = config.url.replace("/notifications", ROUTES.notifications);
+    // Handle the specific route prefixes WITHOUT adding /api
+    if (config.url?.startsWith("/auth")) {
+      config.url = config.url; // No modification needed
+    } else if (config.url?.startsWith("/login")) {
+      config.url = "/auth/login"; // Fix login path
+    } else if (config.url?.startsWith("/register")) {
+      config.url = "/auth/register"; // Fix register path
+    } else if (config.url?.startsWith("/listings")) {
+      config.url = ROUTES.listings + config.url.replace("/listings", "");
+    } else if (config.url?.startsWith("/users")) {
+      config.url = ROUTES.users + config.url.replace("/users", "");
+    } else if (config.url?.startsWith("/messages")) {
+      config.url = ROUTES.messages + config.url.replace("/messages", "");
+    } else if (config.url?.startsWith("/uploads")) {
+      config.url = ROUTES.uploads + config.url.replace("/uploads", "");
+    } else if (config.url?.startsWith("/notifications")) {
+      config.url = ROUTES.notifications + config.url.replace("/notifications", "");
     }
 
     // Log the final URL

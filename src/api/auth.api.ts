@@ -95,15 +95,13 @@ export class AuthAPI {
       console.log("Sending signup request:", {
         email: data.email,
         username: data.username,
-        // Don't log password
       });
 
       const response = await apiClient.post<AuthResponse>("/auth/register", {
         email: data.email,
         username: data.username,
         password: data.password,
-        // Add any missing required fields from schema
-        name: data.username, // Required by Prisma schema
+        name: data.username,
       });
 
       console.log("Signup response:", {
@@ -136,8 +134,8 @@ export class AuthAPI {
     try {
       console.log("Sending login request:", { email: data.email });
       
-      // Remove /auth from the URL since it's handled by the interceptor
-      const response = await apiClient.post<AuthResponse>("/login", {
+      // Use the correct auth endpoint
+      const response = await apiClient.post<AuthResponse>("/auth/login", {
         email: data.email,
         password: data.password
       });
