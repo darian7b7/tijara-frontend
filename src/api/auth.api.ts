@@ -81,12 +81,35 @@ export class TokenManager {
 export class AuthAPI {
   static async signup(data: SignupRequest): Promise<AuthResponse> {
     try {
-      const response = await apiClient.post<AuthResponse>("/auth/register", data);
+      console.log("Sending signup request:", {
+        email: data.email,
+        username: data.username,
+        // Don't log password
+      });
+
+      const response = await apiClient.post<AuthResponse>("/auth/register", {
+        email: data.email,
+        username: data.username,
+        password: data.password,
+        // Add any missing required fields from schema
+        name: data.username, // Required by Prisma schema
+      });
+
+      console.log("Signup response:", {
+        success: response.data.success,
+        hasUser: !!response.data.data?.user,
+        hasTokens: !!response.data.data?.tokens,
+      });
+
       if (response.data.success && response.data.data?.tokens) {
         TokenManager.setTokens(response.data.data.tokens);
       }
       return response.data;
     } catch (error: any) {
+      console.error("Signup request failed:", {
+        status: error?.response?.status,
+        data: error?.response?.data,
+      });
       const errorResponse: AuthResponse = {
         success: false,
         error: {

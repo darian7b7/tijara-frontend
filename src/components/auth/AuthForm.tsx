@@ -2,16 +2,17 @@ import React, { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/Button";
 import type { SignupRequest } from "@/types/auth";
+import { toast } from "react-hot-toast";
 
 interface AuthFormProps {
   type: "login" | "signup";
   onSuccess?: () => void;
 }
 
-interface AuthFormData {
+interface RegisterFormData {
   email: string;
   password: string;
-  confirmPassword: string;
+  username: string;
   name: string;
 }
 
@@ -19,10 +20,10 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type, onSuccess }) => {
   const isLogin = type === "login";
   const { login, signup, error: authError, clearError } = useAuth();
 
-  const [formData, setFormData] = useState<AuthFormData>({
+  const [formData, setFormData] = useState<RegisterFormData>({
     email: "",
     password: "",
-    confirmPassword: "",
+    username: "",
     name: "",
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -58,11 +59,13 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type, onSuccess }) => {
           signupData.name,
         );
         if (response.success && response.data) {
+          toast.success("Registration successful!");
           onSuccess?.();
         }
       }
-    } catch (err) {
-      console.error(`Failed to ${type}:`, err);
+    } catch (error: any) {
+      console.error("Registration error:", error);
+      toast.error(error?.error?.message || "Registration failed");
     } finally {
       setIsLoading(false);
     }
