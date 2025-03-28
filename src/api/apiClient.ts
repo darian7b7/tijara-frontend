@@ -11,6 +11,7 @@ const apiClient: AxiosInstance = axios.create({
   withCredentials: true, // Important for CORS with credentials
   headers: {
     "Content-Type": "application/json",
+    "Accept": "application/json"
   },
 });
 
@@ -18,6 +19,8 @@ apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const url = `${config.baseURL || ''}${config.url || ''}`;
     console.log('Making request to:', url);
+    console.log('Request data:', config.data);
+    
     const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -44,17 +47,21 @@ apiClient.interceptors.response.use(
       status: error.response?.status,
       url: error.config?.url,
       data: error.response?.data,
-      message: error.message
+      message: error.message,
+      details: error.response?.data?.message || error.message
     });
     
+    // Format error response consistently
     const errorResponse = {
       success: false,
-      error: error.response?.data?.message || error.message || "An error occurred",
-      data: null,
+      error: error.response?.data?.message || error.message || 'Request failed',
+      errors: error.response?.data?.errors || [],
       status: error.response?.status || 500,
+      data: null
     };
+
     return Promise.reject(errorResponse);
-  },
+  }
 );
 
 export default apiClient;

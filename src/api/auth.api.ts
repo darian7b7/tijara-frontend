@@ -170,7 +170,7 @@ export class AuthAPI {
     username: string
   ): Promise<APIResponse<AuthResponse>> {
     try {
-      console.log("Sending signup request:", { email, username });
+      console.log("Sending signup request:", { email, username, password: '***' });
       const response = await apiClient.post<APIResponse<AuthResponse>>('/auth/register', {
         email,
         password,
@@ -185,13 +185,17 @@ export class AuthAPI {
       console.error("Signup Error:", {
         status: error?.response?.status,
         data: error?.response?.data,
-        message: error?.message
+        message: error?.message,
+        errors: error?.response?.data?.errors,
+        details: error?.response?.data?.message || error?.message
       });
+      
+      // Return a properly formatted error response
       return {
         success: false,
-        error: error.response?.data?.message || 'Registration failed',
-        errors: error.response?.data?.errors,
-        status: error.response?.status || 500
+        error: error?.response?.data?.message || error?.message || 'Registration failed',
+        status: error?.response?.status || 500,
+        data: null
       };
     }
   }
