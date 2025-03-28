@@ -11,19 +11,25 @@ const apiClient = axios.create({
   withCredentials: true,
 });
 
-// Define route prefixes
+// Define route prefixes correctly
 const ROUTES = {
-  auth: "/auth",
-  listings: "/listings",
-  users: "/users",
-  messages: "/messages",
-  uploads: "/uploads",
-  notifications: "/notifications",
+  auth: "/api/auth",
+  listings: "/api/listings",
+  users: "/api/users",
+  messages: "/api/messages",
+  uploads: "/api/uploads",
+  notifications: "/api/notifications",
 };
 
-// Update API endpoints to use correct route prefixes
+// Add request logging
 apiClient.interceptors.request.use(
   (config) => {
+    console.log('🚀 API Request:', {
+      method: config.method?.toUpperCase(),
+      url: config.url,
+      data: config.data,
+    });
+    
     // Add route prefix based on endpoint
     if (config.url?.startsWith("/auth")) {
       config.url = ROUTES.auth + config.url.replace("/auth", "");
@@ -47,18 +53,27 @@ apiClient.interceptors.request.use(
     return config;
   },
   (error) => {
-    console.error("Request error:", error);
+    console.error("❌ Request error:", error);
     return Promise.reject(error);
   },
 );
 
+// Add response logging
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('✅ API Response:', {
+      status: response.status,
+      url: response.config.url,
+      data: response.data,
+    });
+    return response;
+  },
   (error) => {
-    console.error('API Error:', {
+    console.error('❌ API Error:', {
       status: error?.response?.status,
+      url: error?.config?.url,
       data: error?.response?.data,
-      url: error?.config?.url
+      message: error?.message,
     });
 
     if (!error.response) {

@@ -3,9 +3,8 @@ import type { User } from "./user";
 export type { User };
 
 export interface TokenPayload {
+  id: string;
   exp: number;
-  iat: number;
-  userId: string;
 }
 
 export interface LoginRequest {
@@ -25,14 +24,8 @@ export interface AuthTokens {
 }
 
 export interface AuthError {
-  code:
-    | "INVALID_CREDENTIALS"
-    | "ACCOUNT_DISABLED"
-    | "EMAIL_NOT_VERIFIED"
-    | "NETWORK_ERROR"
-    | "UNKNOWN";
+  code: string;
   message: string;
-  details?: Record<string, any>;
 }
 
 export interface AuthResponse {
@@ -94,4 +87,18 @@ export interface UserActivity {
   ip?: string;
   device?: string;
   location?: string;
+}
+
+export interface APIResponse<T> {
+  success: boolean;
+  data: T | null;
+  error?: AuthError;
+  status: number;
+}
+
+export interface UserProfile extends User {
+  bio?: string;
+  location?: string;
+  createdAt: string;
+  updatedAt: string;
 }

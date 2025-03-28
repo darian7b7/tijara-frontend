@@ -1,12 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthAPI, TokenManager } from "@/api/auth.api";
-import type {
-  AuthState,
-  AuthContextType,
-  AuthResponse,
-  AuthError,
-} from "@/types/auth";
+import type { AuthState, AuthContextType, AuthResponse, AuthError } from "@/types/auth";
 import { toast } from "react-toastify";
 
 const initialState: AuthState = {
@@ -35,7 +30,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
 
         const response = await AuthAPI.getCurrentUser();
-
         if (response.success && response.data?.user) {
           setState({
             user: response.data.user,
@@ -44,12 +38,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             error: null,
           });
         } else {
-          TokenManager.clearTokens(); // token invalid
+          TokenManager.clearTokens();
           setState({ ...initialState, isLoading: false });
         }
       } catch (err: any) {
         console.warn("Auth init failed:", err.message);
-        // Handle rate limiting with exponential backoff
         if (err.status === 429) {
           const retryAfter = parseInt(
             err.response?.headers?.["retry-after"] || "60",
@@ -98,11 +91,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (error: any) {
       const authError: AuthError = {
         code: "INVALID_CREDENTIALS",
-        message: error?.response?.data?.message || "Login failed",
+        message: error?.message || "Login failed",
       };
       setState((prev) => ({ ...prev, error: authError }));
       toast.error(authError.message);
-      throw authError;
+      throw error;
     }
   };
 
@@ -112,7 +105,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     username: string,
   ): Promise<AuthResponse> => {
     try {
+      console.log("🔐 Attempting signup:", { email, username });
       const response = await AuthAPI.signup({ email, password, username });
+      console.log("✅ Signup response:", response);
+      
       if (response.success && response.data?.user) {
         setState({
           user: response.data.user,
@@ -124,13 +120,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
       return response;
     } catch (error: any) {
+      console.error("❌ Signup error:", error);
       const authError: AuthError = {
         code: "UNKNOWN",
-        message: error?.response?.data?.message || "Signup failed",
+        message: error?.message || "Signup failed",
       };
       setState((prev) => ({ ...prev, error: authError }));
       toast.error(authError.message);
-      throw authError;
+      throw error;
     }
   };
 
@@ -148,7 +145,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setState((prev) => ({ ...prev, error: null }));
   };
 
-  const value = {
+  const value: AuthContextType = {
     ...state,
     login,
     signup,

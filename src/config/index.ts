@@ -9,5 +9,5 @@ const isDevelopment = isBrowser
 
 // Set API URL without /api suffix
 export const API_BASE_URL = isDevelopment
-  ? "http://localhost:5001"
-  : "https://tijara-backend-production.up.railway.app";
+  ? "http://localhost:5001/api"
+  : `${import.meta.env.VITE_API_URL}/api`;
