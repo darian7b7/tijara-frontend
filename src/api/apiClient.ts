@@ -17,14 +17,14 @@ const apiClient = axios.create({
   withCredentials: false, // Changed to false since we're using token auth
 });
 
-// Define routes WITH /api prefix
+// Define routes WITHOUT /api prefix since it's in the base URL
 const ROUTES = {
-  auth: "/api/auth",
-  listings: "/api/listings",
-  users: "/api/users",
-  messages: "/api/messages",
-  uploads: "/api/uploads",
-  notifications: "/api/notifications",
+  auth: "/auth",
+  listings: "/listings",
+  users: "/users",
+  messages: "/messages",
+  uploads: "/uploads",
+  notifications: "/notifications",
 };
 
 // Helper to generate request key
@@ -67,17 +67,17 @@ apiClient.interceptors.request.use(
     }
 
     // Handle auth routes
-    if (config.url?.startsWith("/api/auth")) {
-      // Already has /api prefix
+    if (config.url?.startsWith("/auth")) {
+      // Already has correct prefix
       return config;
     }
 
     if (config.url === "/login") {
-      config.url = "/api/auth/login";
+      config.url = "/auth/login";
     } else if (config.url === "/register") {
-      config.url = "/api/auth/register";
+      config.url = "/auth/register";
     } else if (config.url === "/listings") {
-      config.url = "/api/listings";
+      config.url = "/listings";
     }
 
     // Add token to request if not already set
@@ -127,7 +127,7 @@ apiClient.interceptors.response.use(
       const tokens = JSON.parse(localStorage.getItem(AUTH_TOKEN_KEY) || "null");
       if (tokens?.refreshToken) {
         try {
-          const response = await apiClient.post("/api/auth/refresh", {
+          const response = await apiClient.post("/auth/refresh", {
             refreshToken: tokens.refreshToken
           });
           if (response.data?.data?.tokens) {
