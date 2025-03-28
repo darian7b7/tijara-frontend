@@ -1,6 +1,15 @@
 import apiClient from "./apiClient";
 import { jwtDecode } from "jwt-decode";
-import type { UserProfile, UserSettings } from "@/types/user";
+import type { 
+  UserProfile, 
+  UserSettings, 
+  User, 
+  AuthTokens, 
+  AuthResponse, 
+  AuthError, 
+  SignupRequest, 
+  LoginRequest 
+} from "@/types/auth";
 
 // Define types
 export interface AuthTokens {
@@ -17,13 +26,12 @@ export interface User {
 }
 
 export interface AuthResponse {
-  user: User;
-  tokens: AuthTokens;
-}
-
-export interface TokenPayload {
-  id: string;
-  exp: number;
+  success: boolean;
+  data: {
+    user: User;
+    tokens: AuthTokens;
+  } | null;
+  error?: string | AuthError;
 }
 
 export interface AuthError {
@@ -38,13 +46,13 @@ export interface APIResponse<T> {
   status: number;
 }
 
-const TOKEN_STORAGE_KEY = "auth_tokens";
-const TOKEN_REFRESH_THRESHOLD = 5 * 60; // 5 minutes in seconds
-
 export class TokenManager {
+  private static readonly TOKEN_STORAGE_KEY = "auth_tokens";
+  private static readonly TOKEN_REFRESH_THRESHOLD = 5 * 60; // 5 minutes in seconds
+
   static getStoredTokens(): AuthTokens | null {
     try {
-      const tokens = localStorage.getItem(TOKEN_STORAGE_KEY);
+      const tokens = localStorage.getItem(this.TOKEN_STORAGE_KEY);
       return tokens ? JSON.parse(tokens) : null;
     } catch (error) {
       console.error("Failed to parse stored tokens:", error);
@@ -54,27 +62,20 @@ export class TokenManager {
   }
 
   static setTokens(tokens: AuthTokens): void {
-    try {
-      localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(tokens));
-      apiClient.defaults.headers.common["Authorization"] =
-        `Bearer ${tokens.accessToken}`;
-    } catch (error) {
-      console.error("Failed to store tokens:", error);
-      this.clearTokens();
-    }
+    localStorage.setItem(this.TOKEN_STORAGE_KEY, JSON.stringify(tokens));
+    apiClient.defaults.headers.common["Authorization"] = `Bearer ${tokens.accessToken}`;
   }
 
   static clearTokens(): void {
-    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    localStorage.removeItem(this.TOKEN_STORAGE_KEY);
     delete apiClient.defaults.headers.common["Authorization"];
     window.dispatchEvent(new CustomEvent("auth-logout"));
   }
 
   static isTokenExpired(token: string): boolean {
     try {
-      const decoded = jwtDecode<TokenPayload>(token);
-      const currentTime = Math.floor(Date.now() / 1000);
-      return (decoded.exp || 0) <= currentTime;
+      const decoded = jwtDecode(token) as { exp: number };
+      return Date.now() >= decoded.exp * 1000;
     } catch {
       return true;
     }
@@ -82,9 +83,9 @@ export class TokenManager {
 
   static shouldRefreshToken(token: string): boolean {
     try {
-      const decoded = jwtDecode<TokenPayload>(token);
-      const currentTime = Math.floor(Date.now() / 1000);
-      return (decoded.exp || 0) - currentTime <= TOKEN_REFRESH_THRESHOLD;
+      const decoded = jwtDecode(token) as { exp: number };
+      const expiresIn = decoded.exp * 1000 - Date.now();
+      return expiresIn <= this.TOKEN_REFRESH_THRESHOLD * 1000;
     } catch {
       return true;
     }
@@ -129,86 +130,38 @@ export class TokenManager {
         );
       }
     } else {
-      apiClient.defaults.headers.common["Authorization"] =
-        `Bearer ${tokens.accessToken}`;
+      apiClient.defaults.headers.common["Authorization"] = `Bearer ${tokens.accessToken}`;
     }
   }
 }
 
 export class AuthAPI {
-  static async login(email: string, password: string): Promise<APIResponse<AuthResponse>> {
+  static async signup(data: SignupRequest): Promise<APIResponse<AuthResponse>> {
     try {
-      console.log("Sending login request:", { email });
-      const response = await apiClient.post<APIResponse<AuthResponse>>('/auth/login', {
-        email,
-        password,
-      });
-      console.log("Login response:", response.data);
-      if (response.data.data?.tokens) {
+      const response = await apiClient.post<APIResponse<AuthResponse>>("/auth/register", data);
+      
+      if (response.data.success && response.data.data?.tokens) {
         TokenManager.setTokens(response.data.data.tokens);
       }
+      
       return response.data;
     } catch (error: any) {
-      console.error("Login Error:", {
-        status: error?.response?.status,
-        data: error?.response?.data,
-        message: error?.message
-      });
-      TokenManager.clearTokens();
-      return {
-        success: false,
-        error: error.response?.data?.message || 'Login failed',
-        status: error.response?.status || 500,
-        data: null
-      };
+      // Let apiClient handle the error standardization
+      throw error;
     }
   }
 
-  static async signup(
-    email: string,
-    password: string,
-    username: string
-  ): Promise<APIResponse<AuthResponse>> {
+  static async login(data: LoginRequest): Promise<APIResponse<AuthResponse>> {
     try {
-      console.log("Sending signup request:", { 
-        email, 
-        username, 
-        passwordLength: password?.length || 0 
-      });
-
-      const response = await apiClient.post<APIResponse<AuthResponse>>('/auth/register', {
-        email,
-        password,
-        username
-      });
-
-      console.log("Signup response:", {
-        success: response.data.success,
-        hasData: !!response.data.data,
-        error: response.data.error
-      });
-
-      if (response.data.data?.tokens) {
+      const response = await apiClient.post<APIResponse<AuthResponse>>("/auth/login", data);
+      
+      if (response.data.success && response.data.data?.tokens) {
         TokenManager.setTokens(response.data.data.tokens);
       }
-
+      
       return response.data;
     } catch (error: any) {
-      console.error("Signup Error:", {
-        status: error?.response?.status,
-        data: error?.response?.data,
-        message: error?.response?.data?.message || error?.message,
-        errors: error?.response?.data?.errors
-      });
-      
-      // Return a properly formatted error response
-      return {
-        success: false,
-        error: error?.response?.data?.message || error?.message || 'Registration failed',
-        errors: error?.response?.data?.errors || [],
-        status: error?.response?.status || 500,
-        data: null
-      };
+      throw error;
     }
   }
 
@@ -222,61 +175,34 @@ export class AuthAPI {
         data: null
       };
     } catch (error: any) {
-      console.error("Logout Error:", {
-        status: error?.response?.status,
-        data: error?.response?.data,
-        message: error?.message
-      });
-      return {
-        success: false,
-        error: 'Error logging out',
-        status: 500,
-        data: null
-      };
-    }
-  }
-
-  static async refreshToken(): Promise<APIResponse<AuthResponse>> {
-    try {
-      const response = await apiClient.post<APIResponse<AuthResponse>>('/auth/refresh');
-      console.log("Refresh token response:", response.data);
-      if (response.data.data?.tokens) {
-        TokenManager.setTokens(response.data.data.tokens);
-      }
-      return response.data;
-    } catch (error: any) {
-      console.error("Refresh token Error:", {
-        status: error?.response?.status,
-        data: error?.response?.data,
-        message: error?.message
-      });
+      console.error("Logout error:", error);
+      // Always clear tokens on logout, even if the API call fails
       TokenManager.clearTokens();
-      return {
-        success: false,
-        error: error.response?.data?.message || 'Token refresh failed',
-        status: error.response?.status || 500,
-        data: null
-      };
+      throw error;
     }
   }
 
   static async getCurrentUser(): Promise<APIResponse<AuthResponse>> {
     try {
-      const response = await apiClient.get<APIResponse<AuthResponse>>('/auth/me');
-      console.log("Get current user response:", response.data);
+      const response = await apiClient.get<APIResponse<AuthResponse>>("/auth/me");
       return response.data;
     } catch (error: any) {
-      console.error("Get current user Error:", {
-        status: error?.response?.status,
-        data: error?.response?.data,
-        message: error?.message
-      });
-      return {
-        success: false,
-        error: error.response?.data?.message || 'Failed to get current user',
-        status: error.response?.status || 500,
-        data: null
-      };
+      throw error;
+    }
+  }
+
+  static async refreshToken(): Promise<APIResponse<AuthResponse>> {
+    try {
+      const response = await apiClient.post<APIResponse<AuthResponse>>("/auth/refresh");
+      
+      if (response.data.success && response.data.data?.tokens) {
+        TokenManager.setTokens(response.data.data.tokens);
+      }
+      
+      return response.data;
+    } catch (error: any) {
+      TokenManager.clearTokens();
+      throw error;
     }
   }
 }

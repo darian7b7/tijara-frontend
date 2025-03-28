@@ -41,22 +41,17 @@ const Register: React.FC = () => {
 
     try {
       const { confirmPassword, ...signupData } = formData;
-      const response = await signup(
+      await signup(
         signupData.email,
         signupData.password,
         signupData.username,
       );
 
-      if (response.success && response.data) {
-        toast.success("Registration successful!");
-        navigate("/");
-      } else {
-        const errorMessage = response.error || "Registration failed";
-        setFormError(errorMessage);
-      }
+      toast.success("Registration successful!");
+      navigate("/");
     } catch (error: any) {
       console.error("Registration error:", error);
-      setFormError(error.error || error.message || "Registration failed");
+      setFormError(error.message || "Registration failed");
     } finally {
       setLoading(false);
     }
