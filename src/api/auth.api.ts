@@ -12,6 +12,17 @@ import type {
   APIResponse,
 } from "@/types/auth";
 
+// Add debounce helper at the top of the file
+const debounce = (func: Function, wait: number) => {
+  let timeout: NodeJS.Timeout;
+  return (...args: any[]) => {
+    clearTimeout(timeout);
+    return new Promise((resolve) => {
+      timeout = setTimeout(() => resolve(func(...args)), wait);
+    });
+  };
+};
+
 export class TokenManager {
   private static readonly TOKEN_STORAGE_KEY = "auth_tokens";
   private static readonly TOKEN_REFRESH_THRESHOLD = 5 * 60; // 5 minutes in seconds
@@ -90,6 +101,12 @@ export class TokenManager {
 }
 
 export class AuthAPI {
+  // Add login attempt tracking
+  private static loginAttempts = 0;
+  private static lastLoginAttempt = 0;
+  private static readonly LOGIN_COOLDOWN = 2000; // 2 seconds
+  private static readonly MAX_LOGIN_ATTEMPTS = 3;
+
   static async signup(data: SignupRequest): Promise<AuthResponse> {
     try {
       console.log("Sending signup request:", {
@@ -132,6 +149,24 @@ export class AuthAPI {
 
   static async login(data: LoginRequest): Promise<AuthResponse> {
     try {
+      // Check if we're within cooldown period
+      const now = Date.now();
+      if (this.loginAttempts >= this.MAX_LOGIN_ATTEMPTS && 
+          now - this.lastLoginAttempt < this.LOGIN_COOLDOWN) {
+        throw {
+          response: {
+            status: 429,
+            data: {
+              message: "Please wait a moment before trying again"
+            }
+          }
+        };
+      }
+
+      // Update attempt tracking
+      this.loginAttempts++;
+      this.lastLoginAttempt = now;
+
       console.log("🔑 Login attempt:", { email: data.email });
       
       const response = await apiClient.post<AuthResponse>("/api/auth/login", {
@@ -139,18 +174,40 @@ export class AuthAPI {
         password: data.password
       });
       
+      // Reset attempts on success
+      this.loginAttempts = 0;
+      
       if (response.data.success && response.data.data?.tokens) {
         TokenManager.setTokens(response.data.data.tokens);
+        console.log("✅ Login successful");
       }
       
       return response.data;
     } catch (error: any) {
-      console.error("❌ Login failed:", error?.response?.data?.message || "Unknown error");
+      const status = error?.response?.status;
+      const message = error?.response?.data?.message || "Unknown error";
+      
+      console.error("❌ Login failed:", { status, message });
+
+      // Handle specific error cases
+      let errorMessage = "Invalid email or password";
+      if (status === 429) {
+        errorMessage = "Too many attempts. Please wait a moment before trying again.";
+        // Reset attempts after cooldown
+        setTimeout(() => {
+          this.loginAttempts = 0;
+        }, this.LOGIN_COOLDOWN);
+      } else if (status === 404) {
+        errorMessage = "User not found";
+      } else if (status === 401) {
+        errorMessage = "Invalid credentials";
+      }
+
       throw {
         success: false,
         error: {
-          code: error?.response?.data?.error?.code || "LOGIN_FAILED",
-          message: error?.response?.data?.error?.message || "Invalid email or password"
+          code: status?.toString() || "LOGIN_FAILED",
+          message: errorMessage
         }
       };
     }
