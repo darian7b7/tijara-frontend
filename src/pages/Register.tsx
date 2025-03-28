@@ -1,23 +1,22 @@
-import type { FormEvent, ChangeEvent } from "react";
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import type { SignupRequest } from "@/types";
+import { useState, FormEvent, ChangeEvent } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "react-toastify";
 
-interface RegisterFormData extends SignupRequest {
+interface FormData {
+  email: string;
+  password: string;
   confirmPassword: string;
+  username: string;
 }
 
-const Register: React.FC = () => {
-  const navigate = useNavigate();
+export default function Register() {
   const { signup, error: authError, clearError } = useAuth();
-
-  const [formData, setFormData] = useState<RegisterFormData>({
-    username: "",
+  const [formData, setFormData] = useState<FormData>({
     email: "",
     password: "",
     confirmPassword: "",
+    username: "",
   });
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -30,20 +29,26 @@ const Register: React.FC = () => {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setFormError("");
+    setFormError(null);
     setLoading(true);
+
+    // Validate passwords match
+    if (formData.password !== formData.confirmPassword) {
+      setFormError("Passwords do not match");
+      setLoading(false);
+      return;
+    }
 
     try {
       const { confirmPassword, ...signupData } = formData;
-      await signup(signupData);
+      await signup(signupData.email, signupData.password, signupData.username);
       toast.success("Registration successful!");
-      navigate("/");
     } catch (err: any) {
       console.error("Registration error:", err);
-      setFormError(err.message || "Registration failed. Please try again.");
+      setFormError(err.error?.message || err.message || "Registration failed. Please try again.");
       
       // If email is already registered, clear the password fields
-      if (err.message?.toLowerCase().includes("email is already registered")) {
+      if (err.error?.message?.toLowerCase().includes("already registered")) {
         setFormData(prev => ({
           ...prev,
           password: "",
@@ -56,136 +61,111 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="text-center text-3xl font-extrabold text-white">
-          Create an Account
-        </h2>
-      </div>
-
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-gray-800 py-8 px-4 shadow sm:rounded-lg sm:px-10">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Create your account
+          </h2>
+        </div>
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {formError && (
-            <div className="mb-4 bg-red-500 text-white px-4 py-3 rounded relative" role="alert">
-              <span className="block sm:inline">{formError}</span>
+            <div className="rounded-md bg-red-50 p-4">
+              <div className="flex">
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800">{formError}</h3>
+                </div>
+              </div>
             </div>
           )}
-
-          <form className="space-y-6" onSubmit={handleSubmit}>
+          <div className="rounded-md shadow-sm -space-y-px">
             <div>
-              <label
-                htmlFor="username"
-                className="block text-sm font-medium text-gray-300"
-              >
+              <label htmlFor="username" className="sr-only">
                 Username
               </label>
-              <div className="mt-1">
-                <input
-                  id="username"
-                  name="username"
-                  type="text"
-                  required
-                  value={formData.username}
-                  onChange={handleChange}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-700 text-white"
-                />
-              </div>
+              <input
+                id="username"
+                name="username"
+                type="text"
+                required
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                placeholder="Username"
+                value={formData.username}
+                onChange={handleChange}
+              />
             </div>
-
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-300"
-              >
-                Email
+              <label htmlFor="email" className="sr-only">
+                Email address
               </label>
-              <div className="mt-1">
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-700 text-white"
-                />
-              </div>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                placeholder="Email address"
+                value={formData.email}
+                onChange={handleChange}
+              />
             </div>
-
             <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-300"
-              >
+              <label htmlFor="password" className="sr-only">
                 Password
               </label>
-              <div className="mt-1">
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-700 text-white"
-                />
-              </div>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="new-password"
+                required
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                placeholder="Password"
+                value={formData.password}
+                onChange={handleChange}
+              />
             </div>
-
             <div>
-              <label
-                htmlFor="confirmPassword"
-                className="block text-sm font-medium text-gray-300"
-              >
+              <label htmlFor="confirmPassword" className="sr-only">
                 Confirm Password
               </label>
-              <div className="mt-1">
-                <input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-700 text-white"
-                />
-              </div>
-            </div>
-
-            <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
-                  loading
-                    ? "bg-indigo-500 cursor-not-allowed"
-                    : "bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                }`}
-              >
-                {loading ? "Creating Account..." : "Create Account"}
-              </button>
-            </div>
-          </form>
-
-          <div className="mt-6">
-            <div className="relative">
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 text-gray-400">
-                  Already have an account?{" "}
-                  <Link to="/login" className="text-indigo-400 hover:text-indigo-300">
-                    Login here
-                  </Link>
-                </span>
-              </div>
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                autoComplete="new-password"
+                required
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                placeholder="Confirm Password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+              />
             </div>
           </div>
+
+          <div>
+            <button
+              type="submit"
+              disabled={loading}
+              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
+                loading ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+            >
+              {loading ? "Creating account..." : "Sign up"}
+            </button>
+          </div>
+        </form>
+
+        <div className="text-sm text-center">
+          <Link
+            to="/login"
+            className="font-medium text-indigo-600 hover:text-indigo-500"
+          >
+            Already have an account? Sign in
+          </Link>
         </div>
       </div>
     </div>
   );
-};
-
-export default Register;
+}

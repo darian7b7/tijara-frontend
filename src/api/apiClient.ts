@@ -1,6 +1,5 @@
 import axios from "axios";
 import { toast } from "react-toastify";
-import type { AuthError } from "@/types/auth";
 
 const baseURL = import.meta.env.VITE_API_URL || "https://tijara-backend-production.up.railway.app";
 

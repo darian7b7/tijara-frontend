@@ -6,9 +6,10 @@ import type {
   User, 
   AuthTokens, 
   AuthResponse, 
-  AuthError, 
-  SignupRequest, 
-  LoginRequest 
+  AuthError,
+  SignupRequest,
+  LoginRequest,
+  TokenPayload
 } from "@/types/auth";
 
 // Define types
@@ -51,14 +52,8 @@ export class TokenManager {
   private static readonly TOKEN_REFRESH_THRESHOLD = 5 * 60; // 5 minutes in seconds
 
   static getStoredTokens(): AuthTokens | null {
-    try {
-      const tokens = localStorage.getItem(this.TOKEN_STORAGE_KEY);
-      return tokens ? JSON.parse(tokens) : null;
-    } catch (error) {
-      console.error("Failed to parse stored tokens:", error);
-      this.clearTokens();
-      return null;
-    }
+    const tokens = localStorage.getItem(this.TOKEN_STORAGE_KEY);
+    return tokens ? JSON.parse(tokens) : null;
   }
 
   static setTokens(tokens: AuthTokens): void {
@@ -69,13 +64,13 @@ export class TokenManager {
   static clearTokens(): void {
     localStorage.removeItem(this.TOKEN_STORAGE_KEY);
     delete apiClient.defaults.headers.common["Authorization"];
-    window.dispatchEvent(new CustomEvent("auth-logout"));
   }
 
   static isTokenExpired(token: string): boolean {
     try {
-      const decoded = jwtDecode(token) as { exp: number };
-      return Date.now() >= decoded.exp * 1000;
+      const decoded = jwtDecode<TokenPayload>(token);
+      const currentTime = Math.floor(Date.now() / 1000);
+      return decoded.exp < currentTime;
     } catch {
       return true;
     }
@@ -83,9 +78,9 @@ export class TokenManager {
 
   static shouldRefreshToken(token: string): boolean {
     try {
-      const decoded = jwtDecode(token) as { exp: number };
-      const expiresIn = decoded.exp * 1000 - Date.now();
-      return expiresIn <= this.TOKEN_REFRESH_THRESHOLD * 1000;
+      const decoded = jwtDecode<TokenPayload>(token);
+      const currentTime = Math.floor(Date.now() / 1000);
+      return decoded.exp - currentTime < this.TOKEN_REFRESH_THRESHOLD;
     } catch {
       return true;
     }
@@ -93,41 +88,22 @@ export class TokenManager {
 
   static async initialize(): Promise<void> {
     const tokens = this.getStoredTokens();
-    if (!tokens) {
-      this.clearTokens();
-      return;
-    }
+    if (!tokens) return;
 
-    if (this.isTokenExpired(tokens.refreshToken)) {
-      this.clearTokens();
-      window.dispatchEvent(
-        new CustomEvent("auth-error", {
-          detail: { message: "Session expired" },
-        }),
-      );
-      return;
-    }
-
-    if (this.shouldRefreshToken(tokens.accessToken)) {
-      try {
-        const response = await AuthAPI.refreshToken();
-        if (response.data?.tokens) {
-          this.setTokens(response.data.tokens);
-        } else {
-          this.clearTokens();
-          window.dispatchEvent(
-            new CustomEvent("auth-error", {
-              detail: { message: "Failed to refresh session" },
-            }),
-          );
-        }
-      } catch (error) {
+    if (this.isTokenExpired(tokens.accessToken)) {
+      if (this.isTokenExpired(tokens.refreshToken)) {
         this.clearTokens();
-        window.dispatchEvent(
-          new CustomEvent("auth-error", {
-            detail: { message: "Session refresh failed" },
-          }),
-        );
+      } else {
+        try {
+          const response = await AuthAPI.refreshToken();
+          if (response.data?.tokens) {
+            this.setTokens(response.data.tokens);
+          } else {
+            this.clearTokens();
+          }
+        } catch {
+          this.clearTokens();
+        }
       }
     } else {
       apiClient.defaults.headers.common["Authorization"] = `Bearer ${tokens.accessToken}`;
@@ -146,28 +122,23 @@ export class AuthAPI {
       
       return response.data;
     } catch (error: any) {
-      console.error("Signup Error:", {
-        status: error.status,
-        message: error.message,
-        errors: error.errors,
-      });
+      if (error.response?.data) {
+        throw error.response.data;
+      }
 
-      // Rethrow the error with proper structure
       throw {
         success: false,
         error: {
-          code: error.code || "REGISTRATION_FAILED",
-          message: error.message || "Registration failed",
-          errors: error.errors || [],
-        },
-        status: error.status || 400,
+          code: "NETWORK_ERROR",
+          message: error.message || "Network error occurred",
+        }
       };
     }
   }
 
-  static async login(data: LoginRequest): Promise<APIResponse<AuthResponse>> {
+  static async login(data: LoginRequest): Promise<AuthResponse> {
     try {
-      const response = await apiClient.post<APIResponse<AuthResponse>>("/auth/login", data);
+      const response = await apiClient.post<AuthResponse>("/auth/login", data);
       
       if (response.data.success && response.data.data?.tokens) {
         TokenManager.setTokens(response.data.data.tokens);
@@ -175,48 +146,77 @@ export class AuthAPI {
       
       return response.data;
     } catch (error: any) {
-      throw error;
+      if (error.response?.data) {
+        throw error.response.data;
+      }
+
+      throw {
+        success: false,
+        error: {
+          code: "NETWORK_ERROR",
+          message: error.message || "Network error occurred",
+        }
+      };
     }
   }
 
-  static async logout(): Promise<APIResponse<void>> {
+  static async logout(): Promise<void> {
     try {
       await apiClient.post("/auth/logout");
+    } finally {
       TokenManager.clearTokens();
-      return {
-        success: true,
-        status: 200,
-        data: null
+    }
+  }
+
+  static async refreshToken(): Promise<AuthResponse> {
+    const tokens = TokenManager.getStoredTokens();
+    if (!tokens) {
+      throw {
+        success: false,
+        error: {
+          code: "INVALID_TOKEN",
+          message: "No refresh token available",
+        }
       };
-    } catch (error: any) {
-      console.error("Logout error:", error);
-      // Always clear tokens on logout, even if the API call fails
-      TokenManager.clearTokens();
-      throw error;
     }
-  }
 
-  static async getCurrentUser(): Promise<APIResponse<AuthResponse>> {
     try {
-      const response = await apiClient.get<APIResponse<AuthResponse>>("/auth/me");
-      return response.data;
-    } catch (error: any) {
-      throw error;
-    }
-  }
+      const response = await apiClient.post<AuthResponse>("/auth/refresh", {
+        refreshToken: tokens.refreshToken
+      });
 
-  static async refreshToken(): Promise<APIResponse<AuthResponse>> {
-    try {
-      const response = await apiClient.post<APIResponse<AuthResponse>>("/auth/refresh");
-      
       if (response.data.success && response.data.data?.tokens) {
         TokenManager.setTokens(response.data.data.tokens);
       }
-      
+
       return response.data;
     } catch (error: any) {
       TokenManager.clearTokens();
-      throw error;
+      throw error.response?.data || {
+        success: false,
+        error: {
+          code: "NETWORK_ERROR",
+          message: error.message || "Network error occurred",
+        }
+      };
+    }
+  }
+
+  static async getCurrentUser(): Promise<AuthResponse> {
+    try {
+      const response = await apiClient.get<AuthResponse>("/auth/me");
+      return response.data;
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        TokenManager.clearTokens();
+      }
+      throw error.response?.data || {
+        success: false,
+        error: {
+          code: "NETWORK_ERROR",
+          message: error.message || "Network error occurred",
+        }
+      };
     }
   }
 }
