@@ -12,6 +12,7 @@ interface AuthFormProps {
 interface RegisterFormData {
   email: string;
   password: string;
+  confirmPassword: string;
   username: string;
   name: string;
 }
@@ -23,6 +24,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type, onSuccess }) => {
   const [formData, setFormData] = useState<RegisterFormData>({
     email: "",
     password: "",
+    confirmPassword: "",
     username: "",
     name: "",
   });
@@ -40,23 +42,25 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type, onSuccess }) => {
 
     try {
       if (isLogin) {
+        console.log("Attempting login:", { email: formData.email });
         const response = await login(formData.email, formData.password);
         if (response.success && response.data) {
+          toast.success("Welcome back!");
           onSuccess?.();
         }
       } else {
         if (formData.password !== formData.confirmPassword) {
           throw new Error("Passwords do not match");
         }
-        const signupData: SignupRequest = {
+        console.log("Attempting registration:", { 
           email: formData.email,
-          password: formData.password,
-          name: formData.name,
-        };
+          username: formData.username 
+        });
         const response = await signup(
-          signupData.email,
-          signupData.password,
-          signupData.name,
+          formData.email,
+          formData.password,
+          formData.username,
+          formData.name
         );
         if (response.success && response.data) {
           toast.success("Registration successful!");
@@ -64,8 +68,8 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type, onSuccess }) => {
         }
       }
     } catch (error: any) {
-      console.error("Registration error:", error);
-      toast.error(error?.error?.message || "Registration failed");
+      console.error(`${isLogin ? "Login" : "Registration"} error:`, error);
+      toast.error(error?.error?.message || `${isLogin ? "Login" : "Registration"} failed`);
     } finally {
       setIsLoading(false);
     }

@@ -123,17 +123,30 @@ export class AuthAPI {
 
   static async login(data: LoginRequest): Promise<AuthResponse> {
     try {
+      console.log("Sending login request:", { email: data.email });
       const response = await apiClient.post<AuthResponse>("/auth/login", data);
+      
+      console.log("Login response:", {
+        success: response.data.success,
+        hasUser: !!response.data.data?.user,
+        hasTokens: !!response.data.data?.tokens
+      });
+
       if (response.data.success && response.data.data?.tokens) {
         TokenManager.setTokens(response.data.data.tokens);
       }
       return response.data;
     } catch (error: any) {
+      console.error("Login request failed:", {
+        status: error?.response?.status,
+        data: error?.response?.data
+      });
+      
       const errorResponse: AuthResponse = {
         success: false,
         error: {
-          code: "INVALID_CREDENTIALS",
-          message: error?.response?.data?.message || "Login failed",
+          code: error?.response?.data?.error?.code || "UNKNOWN",
+          message: error?.response?.data?.error?.message || "Login failed"
         }
       };
       throw errorResponse;
