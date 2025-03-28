@@ -7,7 +7,7 @@ const pendingRequests = new Map();
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 15000, // Increased timeout
   headers: {
     "Content-Type": "application/json",
   },
@@ -34,7 +34,7 @@ apiClient.interceptors.request.use(
   (config) => {
     const requestKey = getRequestKey(config);
     
-    // Only log if it's not a duplicate request within 1 second
+    // Only log if it's not a duplicate request within 2 seconds
     if (!pendingRequests.has(requestKey)) {
       console.log('🚀 Request:', {
         method: config.method?.toUpperCase(),
@@ -45,13 +45,18 @@ apiClient.interceptors.request.use(
       // Track this request
       pendingRequests.set(requestKey, Date.now());
       
-      // Clean up old requests after 1 second
+      // Clean up old requests after 2 seconds
       setTimeout(() => {
         pendingRequests.delete(requestKey);
-      }, 1000);
+      }, 2000);
     }
 
     // Handle auth routes
+    if (config.url?.startsWith("/api/auth")) {
+      // Already has /api prefix
+      return config;
+    }
+
     if (config.url === "/login") {
       config.url = "/api/auth/login";
     } else if (config.url === "/register") {
@@ -76,7 +81,7 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Add response logging
+// Add response logging and error handling
 apiClient.interceptors.response.use(
   (response) => {
     const requestKey = getRequestKey(response.config);
@@ -92,40 +97,50 @@ apiClient.interceptors.response.use(
     }
     return response;
   },
-  (error) => {
+  async (error) => {
     const requestKey = getRequestKey(error.config);
-    if (pendingRequests.has(requestKey)) {
-      const status = error?.response?.status;
-      const message = error?.response?.data?.message || error.message;
-      
-      console.error('❌ Error:', { status, url: error?.config?.url, message });
+    const status = error?.response?.status;
+    const message = error?.response?.data?.message || error.message;
 
-      // Show user-friendly error messages
-      switch (status) {
-        case 429:
-          toast.error("Too many attempts. Please wait a moment before trying again.");
-          break;
-        case 401:
-          toast.error("Invalid credentials. Please check your email and password.");
-          break;
-        case 404:
-          toast.error("User not found. Please check your email address.");
-          break;
-        case 500:
-          toast.error("Server error. Please try again later.");
-          break;
-        default:
-          toast.error(message || "An error occurred. Please try again.");
+    // Handle rate limiting
+    if (status === 429) {
+      const retryAfter = error.response.headers['retry-after'] || 1;
+      await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+      return apiClient(error.config);
+    }
+
+    // Handle token expiration
+    if (status === 401) {
+      const tokens = JSON.parse(localStorage.getItem("auth_tokens") || "null");
+      if (tokens?.refreshToken) {
+        try {
+          const response = await apiClient.post("/api/auth/refresh", {
+            refreshToken: tokens.refreshToken
+          });
+          if (response.data?.tokens?.accessToken) {
+            localStorage.setItem("auth_tokens", JSON.stringify(response.data.tokens));
+            error.config.headers.Authorization = `Bearer ${response.data.tokens.accessToken}`;
+            return apiClient(error.config);
+          }
+        } catch (refreshError) {
+          localStorage.removeItem("auth_tokens");
+          window.location.href = "/login";
+        }
       }
     }
 
-    return Promise.reject({
-      code: error?.response?.data?.code || String(error?.response?.status),
-      message: error?.response?.data?.message || "An error occurred",
-      errors: error?.response?.data?.errors || [],
-      status: error?.response?.status
-    });
+    if (pendingRequests.has(requestKey)) {
+      console.error('❌ Error:', { status, url: error?.config?.url, message });
+      
+      // Show error toast for important errors
+      if (status !== 401) {
+        toast.error(message || "An error occurred");
+      }
+    }
+    
+    return Promise.reject(error);
   }
 );
 
 export default apiClient;
+export { ROUTES };
