@@ -11,14 +11,14 @@ const apiClient = axios.create({
   withCredentials: true,
 });
 
-// Define route prefixes correctly
+// Define route prefixes WITHOUT /api since it's already in baseURL
 const ROUTES = {
-  auth: "/api/auth",
-  listings: "/api/listings",
-  users: "/api/users",
-  messages: "/api/messages",
-  uploads: "/api/uploads",
-  notifications: "/api/notifications",
+  auth: "/auth",
+  listings: "/listings",
+  users: "/users",
+  messages: "/messages",
+  uploads: "/uploads",
+  notifications: "/notifications",
 };
 
 // Add request logging
@@ -27,10 +27,12 @@ apiClient.interceptors.request.use(
     console.log('🚀 API Request:', {
       method: config.method?.toUpperCase(),
       url: config.url,
+      baseURL: config.baseURL,
+      finalURL: `${config.baseURL}${config.url}`,
       data: config.data,
     });
     
-    // Add route prefix based on endpoint
+    // Add route prefix based on endpoint (without /api)
     if (config.url?.startsWith("/auth")) {
       config.url = ROUTES.auth + config.url.replace("/auth", "");
     } else if (config.url?.startsWith("/listings")) {
