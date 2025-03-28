@@ -131,7 +131,7 @@ export class AuthAPI {
         username: data.username,
       });
 
-      const response = await apiClient.post<AuthResponse>("/auth/register", {
+      const response = await apiClient.post<AuthResponse>("/api/auth/register", {
         email: data.email,
         username: data.username,
         password: data.password,
@@ -186,7 +186,7 @@ export class AuthAPI {
 
       console.log("🔑 Login attempt:", { email: data.email });
       
-      const response = await apiClient.post<AuthResponse>("/auth/login", {
+      const response = await apiClient.post<AuthResponse>("/api/auth/login", {
         email: data.email,
         password: data.password
       });
@@ -248,7 +248,7 @@ export class AuthAPI {
 
   static async logout(): Promise<void> {
     try {
-      await apiClient.post("/auth/logout");
+      await apiClient.post("/api/auth/logout");
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
@@ -263,7 +263,7 @@ export class AuthAPI {
         throw new Error("No refresh token available");
       }
 
-      const response = await apiClient.post<AuthResponse>("/auth/refresh", {
+      const response = await apiClient.post<AuthResponse>("/api/auth/refresh", {
         refreshToken: tokens.refreshToken
       });
 
@@ -287,7 +287,7 @@ export class AuthAPI {
 
   static async getCurrentUser(): Promise<AuthResponse> {
     try {
-      const response = await apiClient.get<AuthResponse>("/auth/me");
+      const response = await apiClient.get<AuthResponse>("/api/auth/me");
       return response.data;
     } catch (error: any) {
       console.error("Get current user failed:", error);
@@ -305,7 +305,7 @@ export class AuthAPI {
 export class UserAPI {
   static async getSettings(): Promise<APIResponse<UserSettings>> {
     try {
-      const response = await apiClient.get<APIResponse<UserSettings>>("/users/settings");
+      const response = await apiClient.get<APIResponse<UserSettings>>("/api/users/settings");
       return response.data;
     } catch (error: any) {
       throw {
@@ -322,7 +322,7 @@ export class UserAPI {
     settings: UserSettings,
   ): Promise<APIResponse<User>> {
     try {
-      const response = await apiClient.put<APIResponse<User>>("/users/settings", settings);
+      const response = await apiClient.put<APIResponse<User>>("/api/users/settings", settings);
       return response.data;
     } catch (error: any) {
       throw {
@@ -339,7 +339,7 @@ export class UserAPI {
     data: FormData,
   ): Promise<APIResponse<User>> {
     try {
-      const response = await apiClient.put<APIResponse<User>>("/users/profile", data, {
+      const response = await apiClient.put<APIResponse<User>>("/api/users/profile", data, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
