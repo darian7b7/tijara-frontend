@@ -136,9 +136,9 @@ export class TokenManager {
 }
 
 export class AuthAPI {
-  static async signup(data: SignupRequest): Promise<APIResponse<AuthResponse>> {
+  static async signup(data: SignupRequest): Promise<AuthResponse> {
     try {
-      const response = await apiClient.post<APIResponse<AuthResponse>>("/auth/register", data);
+      const response = await apiClient.post<AuthResponse>("/auth/register", data);
       
       if (response.data.success && response.data.data?.tokens) {
         TokenManager.setTokens(response.data.data.tokens);
@@ -146,8 +146,22 @@ export class AuthAPI {
       
       return response.data;
     } catch (error: any) {
-      // Let apiClient handle the error standardization
-      throw error;
+      console.error("Signup Error:", {
+        status: error.status,
+        message: error.message,
+        errors: error.errors,
+      });
+
+      // Rethrow the error with proper structure
+      throw {
+        success: false,
+        error: {
+          code: error.code || "REGISTRATION_FAILED",
+          message: error.message || "Registration failed",
+          errors: error.errors || [],
+        },
+        status: error.status || 400,
+      };
     }
   }
 

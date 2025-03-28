@@ -30,28 +30,26 @@ const Register: React.FC = () => {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setFormError("");
     setLoading(true);
-    setFormError(null);
-
-    if (formData.password !== formData.confirmPassword) {
-      setFormError("Passwords do not match");
-      setLoading(false);
-      return;
-    }
 
     try {
       const { confirmPassword, ...signupData } = formData;
-      await signup(
-        signupData.email,
-        signupData.password,
-        signupData.username,
-      );
-
+      await signup(signupData);
       toast.success("Registration successful!");
       navigate("/");
-    } catch (error: any) {
-      console.error("Registration error:", error);
-      setFormError(error.message || "Registration failed");
+    } catch (err: any) {
+      console.error("Registration error:", err);
+      setFormError(err.message || "Registration failed. Please try again.");
+      
+      // If email is already registered, clear the password fields
+      if (err.message?.toLowerCase().includes("email is already registered")) {
+        setFormData(prev => ({
+          ...prev,
+          password: "",
+          confirmPassword: "",
+        }));
+      }
     } finally {
       setLoading(false);
     }

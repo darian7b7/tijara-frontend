@@ -2,7 +2,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import type { AuthError } from "@/types/auth";
 
-const baseURL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+const baseURL = import.meta.env.VITE_API_URL || "https://tijara-backend-production.up.railway.app";
 
 const apiClient = axios.create({
   baseURL,
@@ -30,7 +30,9 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Log the complete error object for debugging
     console.error("Response error:", {
+      response: error.response,
       status: error.response?.status,
       data: error.response?.data,
       message: error.message,
@@ -38,15 +40,25 @@ apiClient.interceptors.response.use(
 
     // Handle network errors
     if (!error.response) {
-      const networkError: AuthError = {
+      return Promise.reject({
         code: "NETWORK_ERROR",
         message: "Network error occurred. Please check your connection.",
-      };
-      return Promise.reject(networkError);
+      });
     }
+
+    // Extract error details from the response
+    const errorResponse = {
+      code: error.response.data?.code || String(error.response.status),
+      message: error.response.data?.message || "An error occurred",
+      errors: error.response.data?.errors || [],
+      status: error.response.status,
+    };
 
     // Handle specific error statuses
     switch (error.response.status) {
+      case 400:
+        // Don't show toast for validation errors, let the component handle it
+        break;
       case 401:
         // Token expired or invalid
         localStorage.removeItem("auth_tokens");
@@ -64,13 +76,7 @@ apiClient.interceptors.response.use(
         break;
     }
 
-    // Return a standardized error object
-    return Promise.reject({
-      code: error.response.data?.code || "UNKNOWN",
-      message: error.response.data?.message || "An unexpected error occurred",
-      errors: error.response.data?.errors,
-      status: error.response.status,
-    });
+    return Promise.reject(errorResponse);
   }
 );
 
