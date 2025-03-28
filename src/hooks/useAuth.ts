@@ -1,14 +1,5 @@
-import { useCallback, useContext } from "react";
-import { AuthContext } from "@/context/AuthContext";
-import type { AuthContextType } from "@/types/auth";
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
-}
+import { useCallback } from "react";
+import { useAuth } from "@/context/AuthContext";
 
 export function useAuthForm() {
   const { login, signup } = useAuth();
@@ -22,19 +13,19 @@ export function useAuthForm() {
         throw error;
       }
     },
-    [login],
+    [login]
   );
 
   const handleSignup = useCallback(
-    async (email: string, password: string, name: string) => {
+    async (email: string, password: string, username: string) => {
       try {
-        await signup(email, password, name);
+        await signup(email, password, username);
       } catch (error) {
         console.error("Signup failed:", error);
         throw error;
       }
     },
-    [signup],
+    [signup]
   );
 
   return {
