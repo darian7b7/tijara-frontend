@@ -1,5 +1,6 @@
 import apiClient from "./apiClient";
 import { jwtDecode } from "jwt-decode";
+import { AUTH_TOKEN_KEY } from "@/config";
 import type {
   UserSettings,
   User,
@@ -24,7 +25,7 @@ const debounce = (func: Function, wait: number) => {
 };
 
 export class TokenManager {
-  private static readonly TOKEN_STORAGE_KEY = "auth_tokens";
+  private static readonly TOKEN_STORAGE_KEY = AUTH_TOKEN_KEY;
   private static readonly TOKEN_REFRESH_THRESHOLD = 5 * 60; // 5 minutes in seconds
 
   static getStoredTokens(): AuthTokens | null {
@@ -114,7 +115,7 @@ export class AuthAPI {
         username: data.username,
       });
 
-      const response = await apiClient.post<AuthResponse>("/auth/register", {
+      const response = await apiClient.post<AuthResponse>("/api/auth/register", {
         email: data.email,
         username: data.username,
         password: data.password,
@@ -215,7 +216,7 @@ export class AuthAPI {
 
   static async logout(): Promise<void> {
     try {
-      await apiClient.post("/auth/logout");
+      await apiClient.post("/api/auth/logout");
     } finally {
       TokenManager.clearTokens();
     }
@@ -234,7 +235,7 @@ export class AuthAPI {
     }
 
     try {
-      const response = await apiClient.post<AuthResponse>("/auth/refresh", {
+      const response = await apiClient.post<AuthResponse>("/api/auth/refresh", {
         refreshToken: tokens.refreshToken,
       });
       return response.data;
@@ -251,7 +252,7 @@ export class AuthAPI {
 
   static async getCurrentUser(): Promise<AuthResponse> {
     try {
-      const response = await apiClient.get<AuthResponse>("/auth/me");
+      const response = await apiClient.get<AuthResponse>("/api/auth/me");
       return response.data;
     } catch (error: any) {
       throw {
@@ -268,7 +269,7 @@ export class AuthAPI {
 export class UserAPI {
   static async getSettings(): Promise<APIResponse<UserSettings>> {
     try {
-      const response = await apiClient.get<APIResponse<UserSettings>>("/user/settings");
+      const response = await apiClient.get<APIResponse<UserSettings>>("/api/user/settings");
       return response.data;
     } catch (error: any) {
       return {
@@ -288,7 +289,7 @@ export class UserAPI {
   ): Promise<APIResponse<User>> {
     try {
       const response = await apiClient.post<APIResponse<User>>(
-        "/user/settings",
+        "/api/user/settings",
         settings,
       );
       return response.data;
@@ -310,7 +311,7 @@ export class UserAPI {
   ): Promise<APIResponse<User>> {
     try {
       const response = await apiClient.put<APIResponse<User>>(
-        "/user/profile",
+        "/api/user/profile",
         data,
       );
       return response.data;

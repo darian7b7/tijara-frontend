@@ -1,6 +1,6 @@
 import axios from "axios";
 import { toast } from "react-toastify";
-import { API_BASE_URL } from "@/config";
+import { API_BASE_URL, AUTH_TOKEN_KEY } from "@/config";
 
 // Add request tracking to prevent duplicate requests
 const pendingRequests = new Map();
@@ -66,7 +66,7 @@ apiClient.interceptors.request.use(
     }
 
     // Add token to request
-    const tokens = JSON.parse(localStorage.getItem("auth_tokens") || "null");
+    const tokens = JSON.parse(localStorage.getItem(AUTH_TOKEN_KEY) || "null");
     if (tokens?.accessToken) {
       config.headers.Authorization = `Bearer ${tokens.accessToken}`;
     } else {
@@ -111,19 +111,19 @@ apiClient.interceptors.response.use(
 
     // Handle token expiration
     if (status === 401) {
-      const tokens = JSON.parse(localStorage.getItem("auth_tokens") || "null");
+      const tokens = JSON.parse(localStorage.getItem(AUTH_TOKEN_KEY) || "null");
       if (tokens?.refreshToken) {
         try {
           const response = await apiClient.post("/api/auth/refresh", {
             refreshToken: tokens.refreshToken
           });
           if (response.data?.tokens?.accessToken) {
-            localStorage.setItem("auth_tokens", JSON.stringify(response.data.tokens));
+            localStorage.setItem(AUTH_TOKEN_KEY, JSON.stringify(response.data.tokens));
             error.config.headers.Authorization = `Bearer ${response.data.tokens.accessToken}`;
             return apiClient(error.config);
           }
         } catch (refreshError) {
-          localStorage.removeItem("auth_tokens");
+          localStorage.removeItem(AUTH_TOKEN_KEY);
           window.location.href = "/login";
         }
       }
