@@ -4,9 +4,9 @@ const isBrowser = typeof window !== "undefined";
 
 const isDevelopment = process.env.NODE_ENV === "development";
 
-// Use the API URL directly since it already includes /api
+// Remove /api from the end since it's already in VITE_API_URL
 export const API_BASE_URL = isDevelopment
-  ? "http://localhost:5001/api"
-  : import.meta.env.VITE_API_URL;
+  ? "http://localhost:5001"
+  : import.meta.env.VITE_API_URL.replace(/\/api$/, '');
 
 console.log('📍 API Base URL:', API_BASE_URL);

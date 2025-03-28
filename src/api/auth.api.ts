@@ -134,7 +134,7 @@ export class AuthAPI {
     try {
       console.log("🔑 Login attempt:", { email: data.email });
       
-      const response = await apiClient.post<AuthResponse>("/auth/login", {
+      const response = await apiClient.post<AuthResponse>("/api/auth/login", {
         email: data.email,
         password: data.password
       });
