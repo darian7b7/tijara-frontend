@@ -1,44 +1,38 @@
-// 📁 src/api/apiClient.ts
-import axios, { InternalAxiosRequestConfig } from 'axios';
-import { API_BASE_URL } from '@/config';
+// src/api/apiClient.ts
 
-console.log('Creating API client with base URL:', API_BASE_URL);
+import axios, { AxiosInstance } from "axios";
+import { API_BASE_URL } from "@/config";
 
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  withCredentials: true,
+const apiClient: AxiosInstance = axios.create({
+  baseURL: API_BASE_URL, // will point to correct backend URL depending on environment
+  timeout: 10000,
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
-// Add request interceptor for debugging
 apiClient.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    console.log('Making request to:', (config.baseURL || '') + (config.url || ''));
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
-  (error) => {
-    console.error('Request error:', error);
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error),
 );
 
-// Add response interceptor for debugging
 apiClient.interceptors.response.use(
-  (response) => {
-    console.log('Response:', response.status, response.data);
-    return response;
-  },
+  (response) => response,
   (error) => {
-    console.error('Response error:', {
-      status: error.response?.status,
-      data: error.response?.data,
-      config: error.config ? {
-        baseURL: error.config.baseURL,
-        url: error.config.url,
-        method: error.config.method,
-      } : undefined,
-    });
-    return Promise.reject(error);
-  }
+    const errorResponse = {
+      success: false,
+      error: error.response?.data?.message || "An error occurred",
+      data: null,
+      status: error.response?.status || 500,
+    };
+    return Promise.reject(errorResponse);
+  },
 );
 
 export default apiClient;
