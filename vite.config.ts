@@ -18,48 +18,6 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     server: {
-      port: 3000,
-    },
-    build: {
-      rollupOptions: {
-        input: {
-          main: path.resolve(__dirname, 'index.html'),
-        },
-      },
-    },
-    // ⬇️ This is the important part
-    resolve: {
-      alias: {
-        '@': path.resolve(__dirname, './src'),
-      },
-    },
-  });
-
-  return {
-    plugins: [react()],
-    css: {
-      postcss: {
-        plugins: [
-          tailwindcss(),
-          autoprefixer(),
-        ],
-      },
-    },
-    resolve: {
-      alias: {
-        "@": path.resolve(__dirname, "src"),
-        "@types": path.resolve(__dirname, "src/types"),
-        "@api": path.resolve(__dirname, "src/api"),
-        "@assets": path.resolve(__dirname, "src/assets"),
-        "@components": path.resolve(__dirname, "src/components"),
-        "@config": path.resolve(__dirname, "src/config"),
-        "@context": path.resolve(__dirname, "src/context"),
-        "@hooks": path.resolve(__dirname, "src/hooks"),
-        "@pages": path.resolve(__dirname, "src/pages"),
-        "@utils": path.resolve(__dirname, "src/utils"),
-      },
-    },
-    server: {
       port: parseInt(env.VITE_PORT || '3000'),
       open: env.VITE_OPEN_BROWSER === 'true',
       strictPort: false,
@@ -94,12 +52,37 @@ export default defineConfig(({ mode }) => {
       sourcemap: mode !== 'production',
       minify: mode === 'production',
       rollupOptions: {
+        input: {
+          main: path.resolve(__dirname, 'index.html'),
+        },
         output: {
           manualChunks: {
             vendor: ['react', 'react-dom', 'react-router-dom'],
             ui: [],
           },
         },
+      },
+    },
+    css: {
+      postcss: {
+        plugins: [
+          tailwindcss(),
+          autoprefixer(),
+        ],
+      },
+    },
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src'),
+        "@types": path.resolve(__dirname, "src/types"),
+        "@api": path.resolve(__dirname, "src/api"),
+        "@assets": path.resolve(__dirname, "src/assets"),
+        "@components": path.resolve(__dirname, "src/components"),
+        "@config": path.resolve(__dirname, "src/config"),
+        "@context": path.resolve(__dirname, "src/context"),
+        "@hooks": path.resolve(__dirname, "src/hooks"),
+        "@pages": path.resolve(__dirname, "src/pages"),
+        "@utils": path.resolve(__dirname, "src/utils"),
       },
     },
     optimizeDeps: {
@@ -114,4 +97,4 @@ export default defineConfig(({ mode }) => {
       "process.env": process.env, // ensures .env vars work in frontend
     },
   };
-;
+});
