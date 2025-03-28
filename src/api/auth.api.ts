@@ -170,30 +170,42 @@ export class AuthAPI {
     username: string
   ): Promise<APIResponse<AuthResponse>> {
     try {
-      console.log("Sending signup request:", { email, username, password: '***' });
+      console.log("Sending signup request:", { 
+        email, 
+        username, 
+        passwordLength: password?.length || 0 
+      });
+
       const response = await apiClient.post<APIResponse<AuthResponse>>('/auth/register', {
         email,
         password,
         username
       });
-      console.log("Signup response:", response.data);
+
+      console.log("Signup response:", {
+        success: response.data.success,
+        hasData: !!response.data.data,
+        error: response.data.error
+      });
+
       if (response.data.data?.tokens) {
         TokenManager.setTokens(response.data.data.tokens);
       }
+
       return response.data;
     } catch (error: any) {
       console.error("Signup Error:", {
         status: error?.response?.status,
         data: error?.response?.data,
-        message: error?.message,
-        errors: error?.response?.data?.errors,
-        details: error?.response?.data?.message || error?.message
+        message: error?.response?.data?.message || error?.message,
+        errors: error?.response?.data?.errors
       });
       
       // Return a properly formatted error response
       return {
         success: false,
         error: error?.response?.data?.message || error?.message || 'Registration failed',
+        errors: error?.response?.data?.errors || [],
         status: error?.response?.status || 500,
         data: null
       };
