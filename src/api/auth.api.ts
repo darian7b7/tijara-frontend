@@ -135,7 +135,12 @@ export class AuthAPI {
   static async login(data: LoginRequest): Promise<AuthResponse> {
     try {
       console.log("Sending login request:", { email: data.email });
-      const response = await apiClient.post<AuthResponse>("/auth/login", data);
+      
+      // Make sure we're using the correct endpoint
+      const response = await apiClient.post<AuthResponse>("/auth/login", {
+        email: data.email,
+        password: data.password
+      });
       
       console.log("Login response:", {
         success: response.data.success,
@@ -143,24 +148,26 @@ export class AuthAPI {
         hasTokens: !!response.data.data?.tokens
       });
 
+      // Store tokens immediately if successful
       if (response.data.success && response.data.data?.tokens) {
         TokenManager.setTokens(response.data.data.tokens);
       }
+      
       return response.data;
     } catch (error: any) {
       console.error("Login request failed:", {
         status: error?.response?.status,
-        data: error?.response?.data
+        data: error?.response?.data,
+        message: error?.message
       });
       
-      const errorResponse: AuthResponse = {
+      throw {
         success: false,
         error: {
-          code: error?.response?.data?.error?.code || "UNKNOWN",
-          message: error?.response?.data?.error?.message || "Login failed"
+          code: error?.response?.data?.error?.code || "LOGIN_FAILED",
+          message: error?.response?.data?.error?.message || "Invalid email or password"
         }
       };
-      throw errorResponse;
     }
   }
 

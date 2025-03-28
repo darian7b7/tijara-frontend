@@ -11,52 +11,46 @@ const apiClient = axios.create({
   withCredentials: true,
 });
 
-// Define route prefixes WITHOUT /api since it's already in baseURL
+// Update route prefixes to include /api
 const ROUTES = {
-  auth: "/auth",
-  listings: "/listings",
-  users: "/users",
-  messages: "/messages",
-  uploads: "/uploads",
-  notifications: "/notifications",
+  auth: "/api/auth",
+  listings: "/api/listings",
+  users: "/api/users",
+  messages: "/api/messages",
+  uploads: "/api/uploads",
+  notifications: "/api/notifications",
 };
 
-// Add request logging
+// Update request interceptor
 apiClient.interceptors.request.use(
   (config) => {
+    // Log the request details
     console.log('🚀 API Request:', {
       method: config.method?.toUpperCase(),
       url: config.url,
-      baseURL: config.baseURL,
-      finalURL: `${config.baseURL}${config.url}`,
       data: config.data,
     });
-    
-    // Add route prefix based on endpoint (without /api)
-    if (config.url?.startsWith("/auth")) {
-      config.url = ROUTES.auth + config.url.replace("/auth", "");
-    } else if (config.url?.startsWith("/listings")) {
-      config.url = ROUTES.listings + config.url.replace("/listings", "");
-    } else if (config.url?.startsWith("/users")) {
-      config.url = ROUTES.users + config.url.replace("/users", "");
-    } else if (config.url?.startsWith("/messages")) {
-      config.url = ROUTES.messages + config.url.replace("/messages", "");
-    } else if (config.url?.startsWith("/uploads")) {
-      config.url = ROUTES.uploads + config.url.replace("/uploads", "");
-    } else if (config.url?.startsWith("/notifications")) {
-      config.url =
-        ROUTES.notifications + config.url.replace("/notifications", "");
+
+    // Don't modify URL if it already starts with /api
+    if (!config.url?.startsWith('/api')) {
+      if (config.url?.startsWith("/auth")) {
+        config.url = ROUTES.auth + config.url.replace("/auth", "");
+      } else if (config.url?.startsWith("/listings")) {
+        config.url = ROUTES.listings + config.url.replace("/listings", "");
+      } else if (config.url?.startsWith("/users")) {
+        config.url = ROUTES.users + config.url.replace("/users", "");
+      } else if (config.url?.startsWith("/messages")) {
+        config.url = ROUTES.messages + config.url.replace("/messages", "");
+      } else if (config.url?.startsWith("/uploads")) {
+        config.url = ROUTES.uploads + config.url.replace("/uploads", "");
+      } else if (config.url?.startsWith("/notifications")) {
+        config.url =
+          ROUTES.notifications + config.url.replace("/notifications", "");
+      }
     }
 
+    // Add token to request
     const tokens = JSON.parse(localStorage.getItem("auth_tokens") || "null");
-    
-    // Debug token presence
-    console.log("🔐 Request Authorization:", {
-      hasTokens: !!tokens,
-      hasAuthHeader: !!config.headers.Authorization,
-      url: config.url
-    });
-
     if (tokens?.accessToken) {
       config.headers.Authorization = `Bearer ${tokens.accessToken}`;
     } else {
