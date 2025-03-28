@@ -1,9 +1,12 @@
 import axios from "axios";
 import { toast } from "react-toastify";
-import { API_BASE_URL, AUTH_TOKEN_KEY } from "@/config";
+import { API_BASE_URL } from "@/config";
 
 // Add request tracking to prevent duplicate requests
 const pendingRequests = new Map();
+
+// Token storage key
+const AUTH_TOKEN_KEY = "auth_tokens";
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -28,6 +31,18 @@ const ROUTES = {
 const getRequestKey = (config: any) => {
   return `${config.method}:${config.url}:${JSON.stringify(config.params || {})}`;
 };
+
+// Initialize auth header from storage
+const initializeAuthHeader = () => {
+  const tokens = JSON.parse(localStorage.getItem(AUTH_TOKEN_KEY) || "null");
+  if (tokens?.accessToken) {
+    apiClient.defaults.headers.common["Authorization"] = `Bearer ${tokens.accessToken}`;
+    console.log("🔒 Initialized Authorization header");
+  }
+};
+
+// Initialize on load
+initializeAuthHeader();
 
 // Simplified request interceptor
 apiClient.interceptors.request.use(
@@ -65,12 +80,10 @@ apiClient.interceptors.request.use(
       config.url = "/api/listings";
     }
 
-    // Add token to request
+    // Add token to request if not already set
     const tokens = JSON.parse(localStorage.getItem(AUTH_TOKEN_KEY) || "null");
-    if (tokens?.accessToken) {
+    if (tokens?.accessToken && !config.headers.Authorization) {
       config.headers.Authorization = `Bearer ${tokens.accessToken}`;
-    } else {
-      delete config.headers.Authorization;
     }
     
     return config;
@@ -117,13 +130,15 @@ apiClient.interceptors.response.use(
           const response = await apiClient.post("/api/auth/refresh", {
             refreshToken: tokens.refreshToken
           });
-          if (response.data?.tokens?.accessToken) {
-            localStorage.setItem(AUTH_TOKEN_KEY, JSON.stringify(response.data.tokens));
-            error.config.headers.Authorization = `Bearer ${response.data.tokens.accessToken}`;
+          if (response.data?.data?.tokens) {
+            localStorage.setItem(AUTH_TOKEN_KEY, JSON.stringify(response.data.data.tokens));
+            apiClient.defaults.headers.common["Authorization"] = `Bearer ${response.data.data.tokens.accessToken}`;
+            error.config.headers.Authorization = `Bearer ${response.data.data.tokens.accessToken}`;
             return apiClient(error.config);
           }
         } catch (refreshError) {
           localStorage.removeItem(AUTH_TOKEN_KEY);
+          delete apiClient.defaults.headers.common["Authorization"];
           window.location.href = "/login";
         }
       }

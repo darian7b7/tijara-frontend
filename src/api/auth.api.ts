@@ -29,38 +29,73 @@ export class TokenManager {
   private static readonly TOKEN_REFRESH_THRESHOLD = 5 * 60; // 5 minutes in seconds
 
   static getStoredTokens(): AuthTokens | null {
-    const tokens = localStorage.getItem(this.TOKEN_STORAGE_KEY);
-    return tokens ? JSON.parse(tokens) : null;
+    try {
+      const tokens = localStorage.getItem(this.TOKEN_STORAGE_KEY);
+      if (!tokens) return null;
+      
+      const parsedTokens = JSON.parse(tokens);
+      if (!parsedTokens?.accessToken || !parsedTokens?.refreshToken) {
+        this.clearTokens();
+        return null;
+      }
+      
+      return parsedTokens;
+    } catch (error) {
+      console.error("Error getting stored tokens:", error);
+      this.clearTokens();
+      return null;
+    }
   }
 
   static setTokens(tokens: AuthTokens): void {
-    // Add debug logging
-    console.log("🔑 Setting tokens:", {
-      hasAccessToken: !!tokens.accessToken,
-      hasRefreshToken: !!tokens.refreshToken
-    });
-    
-    localStorage.setItem(this.TOKEN_STORAGE_KEY, JSON.stringify(tokens));
-    
-    // Ensure Authorization header is set
-    if (tokens.accessToken) {
-      apiClient.defaults.headers.common["Authorization"] = `Bearer ${tokens.accessToken}`;
-      console.log("🔒 Set Authorization header");
+    try {
+      if (!tokens?.accessToken || !tokens?.refreshToken) {
+        console.error("Invalid tokens:", tokens);
+        return;
+      }
+
+      // Add debug logging
+      console.log("🔑 Setting tokens:", {
+        hasAccessToken: !!tokens.accessToken,
+        hasRefreshToken: !!tokens.refreshToken
+      });
+      
+      localStorage.setItem(this.TOKEN_STORAGE_KEY, JSON.stringify(tokens));
+      
+      // Ensure Authorization header is set
+      if (tokens.accessToken) {
+        apiClient.defaults.headers.common["Authorization"] = `Bearer ${tokens.accessToken}`;
+        console.log("🔒 Set Authorization header");
+      }
+    } catch (error) {
+      console.error("Error setting tokens:", error);
+      this.clearTokens();
     }
   }
 
   static clearTokens(): void {
     console.log("🗑️ Clearing tokens from storage");
-    localStorage.removeItem(this.TOKEN_STORAGE_KEY);
-    delete apiClient.defaults.headers.common["Authorization"];
+    try {
+      localStorage.removeItem(this.TOKEN_STORAGE_KEY);
+      delete apiClient.defaults.headers.common["Authorization"];
+      console.log("🔓 Cleared Authorization header");
+    } catch (error) {
+      console.error("Error clearing tokens:", error);
+    }
   }
 
   static isTokenExpired(token: string): boolean {
     try {
       const decoded = jwtDecode<TokenPayload>(token);
       const currentTime = Math.floor(Date.now() / 1000);
-      return decoded.exp < currentTime;
+      const isExpired = decoded.exp < currentTime;
+      console.log("🕒 Token expiration check:", {
+        expiresAt: new Date(decoded.exp * 1000).toISOString(),
+        isExpired
+      });
+      return isExpired;
     } catch {
+      console.error("Error checking token expiration");
       return true;
     }
   }
@@ -76,25 +111,36 @@ export class TokenManager {
   }
 
   static async initialize(): Promise<void> {
+    console.log("🔄 Initializing TokenManager");
     const tokens = this.getStoredTokens();
-    if (!tokens) return;
+    if (!tokens) {
+      console.log("❌ No stored tokens found");
+      return;
+    }
 
     if (this.isTokenExpired(tokens.accessToken)) {
+      console.log("⚠️ Access token expired");
       if (this.isTokenExpired(tokens.refreshToken)) {
+        console.log("⚠️ Refresh token expired, clearing tokens");
         this.clearTokens();
       } else {
+        console.log("🔄 Attempting to refresh token");
         try {
           const response = await AuthAPI.refreshToken();
           if (response.data?.tokens) {
+            console.log("✅ Token refresh successful");
             this.setTokens(response.data.tokens);
           } else {
+            console.error("❌ Token refresh failed: No tokens in response");
             this.clearTokens();
           }
-        } catch {
+        } catch (error) {
+          console.error("❌ Token refresh failed:", error);
           this.clearTokens();
         }
       }
     } else {
+      console.log("✅ Access token valid, setting Authorization header");
       apiClient.defaults.headers.common["Authorization"] =
         `Bearer ${tokens.accessToken}`;
     }
@@ -164,6 +210,9 @@ export class AuthAPI {
         };
       }
 
+      // Clear any existing tokens before login
+      TokenManager.clearTokens();
+
       // Update attempt tracking
       this.loginAttempts++;
       this.lastLoginAttempt = now;
@@ -181,6 +230,15 @@ export class AuthAPI {
       if (response.data.success && response.data.data?.tokens) {
         TokenManager.setTokens(response.data.data.tokens);
         console.log("✅ Login successful");
+      } else {
+        console.error("❌ Login failed: No tokens in response");
+        throw {
+          success: false,
+          error: {
+            code: "NO_TOKENS",
+            message: "Invalid response from server"
+          }
+        };
       }
       
       return response.data;
@@ -216,15 +274,23 @@ export class AuthAPI {
 
   static async logout(): Promise<void> {
     try {
-      await apiClient.post("/api/auth/logout");
+      const tokens = TokenManager.getStoredTokens();
+      if (tokens?.accessToken) {
+        await apiClient.post("/api/auth/logout");
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
     } finally {
       TokenManager.clearTokens();
+      // Clear any cached user data or state
+      console.log("🚪 Logged out successfully");
     }
   }
 
   static async refreshToken(): Promise<AuthResponse> {
     const tokens = TokenManager.getStoredTokens();
-    if (!tokens) {
+    if (!tokens?.refreshToken) {
+      console.error("❌ No refresh token available");
       throw {
         success: false,
         error: {
@@ -235,11 +301,23 @@ export class AuthAPI {
     }
 
     try {
+      console.log("🔄 Attempting to refresh token");
       const response = await apiClient.post<AuthResponse>("/api/auth/refresh", {
         refreshToken: tokens.refreshToken,
       });
+
+      if (response.data.success && response.data.data?.tokens) {
+        console.log("✅ Token refresh successful");
+        TokenManager.setTokens(response.data.data.tokens);
+      } else {
+        console.error("❌ Token refresh failed: Invalid response");
+        TokenManager.clearTokens();
+      }
+
       return response.data;
     } catch (error: any) {
+      console.error("❌ Token refresh failed:", error);
+      TokenManager.clearTokens();
       throw {
         success: false,
         error: {
@@ -252,9 +330,24 @@ export class AuthAPI {
 
   static async getCurrentUser(): Promise<AuthResponse> {
     try {
+      const tokens = TokenManager.getStoredTokens();
+      if (!tokens?.accessToken) {
+        throw {
+          success: false,
+          error: {
+            code: "NO_TOKEN",
+            message: "Not authenticated"
+          }
+        } as AuthResponse;
+      }
+
       const response = await apiClient.get<AuthResponse>("/api/auth/me");
       return response.data;
     } catch (error: any) {
+      console.error("❌ Get current user failed:", error);
+      if (error?.response?.status === 401) {
+        TokenManager.clearTokens();
+      }
       throw {
         success: false,
         error: {
