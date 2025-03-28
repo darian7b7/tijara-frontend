@@ -17,6 +17,26 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+    server: {
+      port: 3000,
+    },
+    build: {
+      rollupOptions: {
+        input: {
+          main: path.resolve(__dirname, 'index.html'),
+        },
+      },
+    },
+    // ⬇️ This is the important part
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src'),
+      },
+    },
+  });
+
+  return {
+    plugins: [react()],
     css: {
       postcss: {
         plugins: [
@@ -94,4 +114,4 @@ export default defineConfig(({ mode }) => {
       "process.env": process.env, // ensures .env vars work in frontend
     },
   };
-});
+;
