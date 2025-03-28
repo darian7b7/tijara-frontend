@@ -14,7 +14,7 @@ const apiClient = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: true,
+  withCredentials: false, // Changed to false since we're using token auth
 });
 
 // Define routes WITH /api prefix
@@ -113,7 +113,7 @@ apiClient.interceptors.response.use(
   async (error) => {
     const requestKey = getRequestKey(error.config);
     const status = error?.response?.status;
-    const message = error?.response?.data?.message || error.message;
+    const message = error?.response?.data?.message || error?.response?.data?.error?.message || error.message;
 
     // Handle rate limiting
     if (status === 429) {
