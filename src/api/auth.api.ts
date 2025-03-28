@@ -13,13 +13,27 @@ import type {
   APIResponse,
 } from "@/types/auth";
 
-// Add debounce helper at the top of the file
-const debounce = (func: Function, wait: number) => {
+// Debounce helper for rate-limiting API calls
+const debounce = <T extends (...args: any[]) => Promise<any>>(
+  func: T, 
+  wait: number
+): ((...args: Parameters<T>) => Promise<ReturnType<T>>) => {
   let timeout: NodeJS.Timeout;
-  return (...args: any[]) => {
+  return (...args: Parameters<T>) => {
     clearTimeout(timeout);
-    return new Promise((resolve) => {
-      timeout = setTimeout(() => resolve(func(...args)), wait);
+    return new Promise<ReturnType<T>>((resolve, reject) => {
+      timeout = setTimeout(async () => {
+        try {
+          const result = await func(...args);
+          resolve(result);
+        } catch (error) {
+          const authError: AuthError = {
+            code: (error as any)?.response?.data?.error?.code || 'UNKNOWN_ERROR',
+            message: (error as any)?.response?.data?.error?.message || 'An unexpected error occurred'
+          };
+          reject(authError);
+        }
+      }, wait);
     });
   };
 };
@@ -118,6 +132,47 @@ export class TokenManager {
       }
     }, this.TOKEN_CHECK_INTERVAL);
   }
+
+  static debouncedRefresh = debounce(async () => {
+    try {
+      const tokens = TokenManager.getStoredTokens();
+      if (!tokens?.refreshToken) {
+        throw {
+          response: {
+            data: {
+              success: false,
+              error: {
+                code: "NO_REFRESH_TOKEN",
+                message: "No refresh token available"
+              }
+            }
+          }
+        };
+      }
+
+      const response = await apiClient.post<AuthResponse>("/auth/refresh", {
+        refreshToken: tokens.refreshToken
+      });
+
+      if (response.data.success && response.data.data?.tokens) {
+        TokenManager.setTokens(response.data.data.tokens);
+      }
+
+      return response.data;
+    } catch (error: any) {
+      console.error("Token refresh failed:", error);
+      TokenManager.clearTokens();
+      
+      const errorResponse: AuthResponse = {
+        success: false,
+        error: {
+          code: error?.response?.data?.error?.code || "REFRESH_ERROR",
+          message: error?.response?.data?.error?.message || "Session expired. Please log in again."
+        }
+      };
+      throw errorResponse;
+    }
+  }, 500);
 }
 
 export class AuthAPI {
@@ -239,30 +294,7 @@ export class AuthAPI {
 
   static async refreshToken(): Promise<AuthResponse> {
     try {
-      const tokens = TokenManager.getStoredTokens();
-      if (!tokens?.refreshToken) {
-        throw {
-          response: {
-            data: {
-              success: false,
-              error: {
-                code: "NO_REFRESH_TOKEN",
-                message: "No refresh token available"
-              }
-            }
-          }
-        };
-      }
-
-      const response = await apiClient.post<AuthResponse>("/auth/refresh", {
-        refreshToken: tokens.refreshToken
-      });
-
-      if (response.data.success && response.data.data?.tokens) {
-        TokenManager.setTokens(response.data.data.tokens);
-      }
-
-      return response.data;
+      return await TokenManager.debouncedRefresh();
     } catch (error: any) {
       console.error("Token refresh failed:", error);
       TokenManager.clearTokens();
