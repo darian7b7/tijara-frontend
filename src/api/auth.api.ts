@@ -138,17 +138,22 @@ export class TokenManager {
 export class AuthAPI {
   static async login(email: string, password: string): Promise<APIResponse<AuthResponse>> {
     try {
+      console.log("Sending login request:", { email });
       const response = await apiClient.post<APIResponse<AuthResponse>>('/auth/login', {
         email,
         password,
       });
-
+      console.log("Login response:", response.data);
       if (response.data.data?.tokens) {
         TokenManager.setTokens(response.data.data.tokens);
       }
-
       return response.data;
     } catch (error: any) {
+      console.error("Login Error:", {
+        status: error?.response?.status,
+        data: error?.response?.data,
+        message: error?.message
+      });
       TokenManager.clearTokens();
       return {
         success: false,
@@ -165,18 +170,23 @@ export class AuthAPI {
     name: string,
   ): Promise<APIResponse<AuthResponse>> {
     try {
+      console.log("Sending signup request:", { email });
       const response = await apiClient.post<APIResponse<AuthResponse>>('/auth/register', {
         email,
         password,
         name,
       });
-
+      console.log("Signup response:", response.data);
       if (response.data.data?.tokens) {
         TokenManager.setTokens(response.data.data.tokens);
       }
-
       return response.data;
     } catch (error: any) {
+      console.error("Signup Error:", {
+        status: error?.response?.status,
+        data: error?.response?.data,
+        message: error?.message
+      });
       return {
         success: false,
         error: error.response?.data?.message || 'Registration failed',
@@ -195,7 +205,12 @@ export class AuthAPI {
         status: 200,
         data: null
       };
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Logout Error:", {
+        status: error?.response?.status,
+        data: error?.response?.data,
+        message: error?.message
+      });
       return {
         success: false,
         error: 'Error logging out',
@@ -208,13 +223,17 @@ export class AuthAPI {
   static async refreshToken(): Promise<APIResponse<AuthResponse>> {
     try {
       const response = await apiClient.post<APIResponse<AuthResponse>>('/auth/refresh');
-      
+      console.log("Refresh token response:", response.data);
       if (response.data.data?.tokens) {
         TokenManager.setTokens(response.data.data.tokens);
       }
-
       return response.data;
     } catch (error: any) {
+      console.error("Refresh token Error:", {
+        status: error?.response?.status,
+        data: error?.response?.data,
+        message: error?.message
+      });
       TokenManager.clearTokens();
       return {
         success: false,
@@ -228,8 +247,14 @@ export class AuthAPI {
   static async getCurrentUser(): Promise<APIResponse<AuthResponse>> {
     try {
       const response = await apiClient.get<APIResponse<AuthResponse>>('/auth/me');
+      console.log("Get current user response:", response.data);
       return response.data;
     } catch (error: any) {
+      console.error("Get current user Error:", {
+        status: error?.response?.status,
+        data: error?.response?.data,
+        message: error?.message
+      });
       return {
         success: false,
         error: error.response?.data?.message || 'Failed to get current user',
@@ -246,6 +271,11 @@ export class UserAPI {
       const response = await apiClient.get<APIResponse<UserSettings>>('/user/settings');
       return response.data;
     } catch (error: any) {
+      console.error("Get settings Error:", {
+        status: error?.response?.status,
+        data: error?.response?.data,
+        message: error?.message
+      });
       return {
         success: false,
         error: error.response?.data?.message || 'Failed to fetch settings',
@@ -260,6 +290,11 @@ export class UserAPI {
       const response = await apiClient.post<APIResponse<UserProfile>>('/user/settings', settings);
       return response.data;
     } catch (error: any) {
+      console.error("Update settings Error:", {
+        status: error?.response?.status,
+        data: error?.response?.data,
+        message: error?.message
+      });
       return {
         success: false,
         error: error.response?.data?.message || 'Failed to update settings',
@@ -274,6 +309,11 @@ export class UserAPI {
       const response = await apiClient.put<APIResponse<UserProfile>>('/user/profile', data);
       return response.data;
     } catch (error: any) {
+      console.error("Update profile Error:", {
+        status: error?.response?.status,
+        data: error?.response?.data,
+        message: error?.message
+      });
       return {
         success: false,
         error: error.response?.data?.message || 'Failed to update profile',
@@ -288,6 +328,11 @@ export class UserAPI {
       const response = await apiClient.get<APIResponse<UserProfile>>(`/user/profile/${userId}`);
       return response.data;
     } catch (error: any) {
+      console.error("Get profile Error:", {
+        status: error?.response?.status,
+        data: error?.response?.data,
+        message: error?.message
+      });
       return {
         success: false,
         error: error.response?.data?.message || 'Failed to fetch profile',

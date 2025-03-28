@@ -2,12 +2,12 @@
 export { UIProvider, useUI } from "./UIContext";
 export { AuthProvider, useAuth } from "./AuthContext";
 export { NotificationsProvider } from "./NotificationsContext";
-export { useNotifications } from "@/hooks/useNotifications";
+export { useNotifications } from "../hooks/useNotifications";
 export { FavoritesProvider, useFavorites } from "./FavoritesContext";
 export { ListingsProvider, useListings } from "./ListingsContext";
 export { MessagesProvider, useMessages } from "./MessagesContext";
 export { ReportsProvider } from "./ReportsContext";
-export { useReports } from "@/hooks/useReports";
+export { useReports } from "../hooks/useReports";
 
 // Combined provider for all contexts
 import type { ReactNode } from "react";
