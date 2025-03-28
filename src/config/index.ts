@@ -8,7 +8,7 @@ const isLocalhost =
 // Get base URL without /api suffix
 const BASE_URL = isLocalhost
   ? "http://localhost:5001"
-  : import.meta.env.VITE_API_URL || "https://tijara-backend-production.up.railway.app";
+  : import.meta.env.VITE_API_URL?.replace(/\/api$/, "") || "https://tijara-backend-production.up.railway.app";
 
 // Log the environment variables and computed values for debugging
 console.log('Environment:', {
