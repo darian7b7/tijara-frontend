@@ -32,7 +32,7 @@ const DEFAULT_SETTINGS: AppSettingsData = {
 };
 
 export class SettingsAPI {
-  private static readonly BASE_PATH = "/api/settings";
+  private static readonly BASE_PATH = "/settings";
 
   static async getSettings(): Promise<APIResponse<AppSettingsData>> {
     const response = await apiClient.get(`${this.BASE_PATH}`);
