@@ -21,12 +21,41 @@ import PrivateRoute from "@/components/auth/AuthRoute";
 const Routes = (): JSX.Element => {
   return (
     <RouterRoutes>
-      <Route path="/" element={<Home />} />
+      {/* Public Routes */}
+      <Route
+        path="/"
+        element={
+          <PrivateRoute publicRoute>
+            <Home />
+          </PrivateRoute>
+        }
+      />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      <Route path="/search" element={<Search />} />
-      <Route path="/listings/:id" element={<ListingDetails />} />
-      <Route path="/category/:category" element={<CategoryPage />} />
+      <Route
+        path="/search"
+        element={
+          <PrivateRoute publicRoute>
+            <Search />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/listings/:id"
+        element={
+          <PrivateRoute publicRoute>
+            <ListingDetails />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/category/:category"
+        element={
+          <PrivateRoute publicRoute>
+            <CategoryPage />
+          </PrivateRoute>
+        }
+      />
       {/* Redirect /listings to home */}
       <Route path="/listings" element={<Navigate to="/" replace />} />
 

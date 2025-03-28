@@ -16,12 +16,18 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, setState] = useState<AuthState>(initialState);
   const navigate = useNavigate();
+  const [retryTimeout, setRetryTimeout] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        await TokenManager.initialize();
+        const hasToken = await TokenManager.initialize();
+        if (!hasToken) {
+          return setState({ ...initialState, isLoading: false });
+        }
+
         const response = await AuthAPI.getCurrentUser();
+
         if (response.success && response.data?.user) {
           setState({
             user: response.data.user,
@@ -30,26 +36,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             error: null,
           });
         } else {
-          setState({
-            ...initialState,
-            isLoading: false,
-          });
+          TokenManager.clearTokens(); // token invalid
+          setState({ ...initialState, isLoading: false });
         }
-      } catch (error) {
-        setState({
-          ...initialState,
-          isLoading: false,
-        });
+      } catch (err: any) {
+        console.warn("Auth init failed:", err.message);
+        // Handle rate limiting with exponential backoff
+        if (err.status === 429) {
+          const retryAfter = parseInt(err.response?.headers?.['retry-after'] || '60', 10);
+          if (retryTimeout) {
+            clearTimeout(retryTimeout);
+          }
+          const timeout = setTimeout(() => {
+            initializeAuth();
+          }, retryAfter * 1000);
+          setRetryTimeout(timeout);
+          toast.warn("Rate limit reached. Will retry authentication later.");
+        } else {
+          TokenManager.clearTokens();
+        }
+        setState((prev) => ({ ...prev, isLoading: false }));
       }
     };
 
     initializeAuth();
+
+    return () => {
+      if (retryTimeout) {
+        clearTimeout(retryTimeout);
+      }
+    };
   }, []);
 
   const login = async (email: string, password: string): Promise<AuthResponse> => {
     try {
       const response = await AuthAPI.login({ email, password });
-      
       if (response.success && response.data?.user) {
         setState({
           user: response.data.user,
@@ -59,26 +80,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
         navigate("/", { replace: true });
       }
-      
       return response;
     } catch (error: any) {
       const authError: AuthError = {
-        code: "NETWORK_ERROR",
-        message: error.message || "Network error occurred during login",
+        code: "INVALID_CREDENTIALS",
+        message: error?.response?.data?.message || "Login failed",
       };
-      setState(prev => ({
-        ...prev,
-        error: authError,
-      }));
+      setState((prev) => ({ ...prev, error: authError }));
       toast.error(authError.message);
-      throw error;
+      throw authError;
     }
   };
 
   const signup = async (email: string, password: string, username: string): Promise<AuthResponse> => {
     try {
       const response = await AuthAPI.signup({ email, password, username });
-      
       if (response.success && response.data?.user) {
         setState({
           user: response.data.user,
@@ -88,42 +104,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
         navigate("/", { replace: true });
       }
-      
       return response;
     } catch (error: any) {
       const authError: AuthError = {
-        code: "NETWORK_ERROR",
-        message: error.message || "Network error occurred during signup",
+        code: "UNKNOWN",
+        message: error?.response?.data?.message || "Signup failed",
       };
-      setState(prev => ({
-        ...prev,
-        error: authError,
-      }));
+      setState((prev) => ({ ...prev, error: authError }));
       toast.error(authError.message);
-      throw error;
+      throw authError;
     }
   };
 
-  const logout = async () => {
+  const logout = async (): Promise<void> => {
     try {
       await AuthAPI.logout();
     } finally {
       TokenManager.clearTokens();
-      setState({
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-        error: null,
-      });
+      setState({ ...initialState, isLoading: false });
       navigate("/login", { replace: true });
     }
   };
 
   const clearError = () => {
-    setState(prev => ({ ...prev, error: null }));
+    setState((prev) => ({ ...prev, error: null }));
   };
 
-  const value: AuthContextType = {
+  const value = {
     ...state,
     login,
     signup,
@@ -132,14 +139,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   if (state.isLoading) {
-    return <div>Loading...</div>;
+    return <div className="text-center p-8 text-gray-600">Loading user...</div>;
   }
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {
