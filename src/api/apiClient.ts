@@ -8,13 +8,9 @@ const pendingRequests = new Map();
 // Token storage key
 const AUTH_TOKEN_KEY = "auth_tokens";
 
-// Strip /api from base URL if present since we'll add it in the routes
-const baseURL = API_BASE_URL.endsWith('/api') 
-  ? API_BASE_URL.slice(0, -4) 
-  : API_BASE_URL;
-
+// Create API client
 const apiClient = axios.create({
-  baseURL,
+  baseURL: API_BASE_URL,
   timeout: 15000, // Increased timeout
   headers: {
     "Content-Type": "application/json",
@@ -22,14 +18,14 @@ const apiClient = axios.create({
   withCredentials: false, // Changed to false since we're using token auth
 });
 
-// Define routes WITH /api prefix
+// Define routes
 const ROUTES = {
-  auth: "/api/auth",
-  listings: "/api/listings",
-  users: "/api/users",
-  messages: "/api/messages",
-  uploads: "/api/uploads",
-  notifications: "/api/notifications",
+  auth: "/auth",
+  listings: "/listings",
+  users: "/users",
+  messages: "/messages",
+  uploads: "/uploads",
+  notifications: "/notifications",
 };
 
 // Helper to generate request key
@@ -69,20 +65,6 @@ apiClient.interceptors.request.use(
       setTimeout(() => {
         pendingRequests.delete(requestKey);
       }, 2000);
-    }
-
-    // Handle auth routes
-    if (config.url?.startsWith("/auth")) {
-      config.url = `/api${config.url}`;
-    } else if (config.url === "/login") {
-      config.url = "/api/auth/login";
-    } else if (config.url === "/register") {
-      config.url = "/api/auth/register";
-    } else if (config.url === "/listings") {
-      config.url = "/api/listings";
-    } else if (!config.url?.startsWith("/api")) {
-      // Add /api prefix to all routes that don't have it
-      config.url = `/api${config.url}`;
     }
 
     // Add token to request if not already set
@@ -132,7 +114,7 @@ apiClient.interceptors.response.use(
       const tokens = JSON.parse(localStorage.getItem(AUTH_TOKEN_KEY) || "null");
       if (tokens?.refreshToken) {
         try {
-          const response = await apiClient.post("/api/auth/refresh", {
+          const response = await apiClient.post("/auth/refresh", {
             refreshToken: tokens.refreshToken
           });
           if (response.data?.data?.tokens) {
