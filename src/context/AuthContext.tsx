@@ -77,8 +77,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     password: string,
   ): Promise<AuthResponse> => {
     try {
+      console.log("🔑 Login attempt:", { email });
       const response = await AuthAPI.login({ email, password });
+      
+      console.log("✅ Login response:", {
+        success: response.success,
+        hasUser: !!response.data?.user,
+        hasTokens: !!response.data?.tokens
+      });
+
       if (response.success && response.data?.user) {
+        // Ensure tokens are set before updating state
+        if (response.data.tokens) {
+          TokenManager.setTokens(response.data.tokens);
+        }
+        
         setState({
           user: response.data.user,
           isAuthenticated: true,
@@ -89,9 +102,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
       return response;
     } catch (error: any) {
+      console.error("❌ Login error:", error);
       const authError: AuthError = {
-        code: "INVALID_CREDENTIALS",
-        message: error?.message || "Login failed",
+        code: error?.error?.code || "UNKNOWN",
+        message: error?.error?.message || "Login failed",
       };
       setState((prev) => ({ ...prev, error: authError }));
       toast.error(authError.message);
@@ -133,8 +147,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const logout = async (): Promise<void> => {
     try {
+      console.log("👋 Logging out");
       await AuthAPI.logout();
     } finally {
+      // Clear tokens before updating state
       TokenManager.clearTokens();
       setState({ ...initialState, isLoading: false });
       navigate("/login", { replace: true });

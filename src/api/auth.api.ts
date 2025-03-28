@@ -22,12 +22,23 @@ export class TokenManager {
   }
 
   static setTokens(tokens: AuthTokens): void {
+    // Add debug logging
+    console.log("🔑 Setting tokens:", {
+      hasAccessToken: !!tokens.accessToken,
+      hasRefreshToken: !!tokens.refreshToken
+    });
+    
     localStorage.setItem(this.TOKEN_STORAGE_KEY, JSON.stringify(tokens));
-    apiClient.defaults.headers.common["Authorization"] =
-      `Bearer ${tokens.accessToken}`;
+    
+    // Ensure Authorization header is set
+    if (tokens.accessToken) {
+      apiClient.defaults.headers.common["Authorization"] = `Bearer ${tokens.accessToken}`;
+      console.log("🔒 Set Authorization header");
+    }
   }
 
   static clearTokens(): void {
+    console.log("🗑️ Clearing tokens from storage");
     localStorage.removeItem(this.TOKEN_STORAGE_KEY);
     delete apiClient.defaults.headers.common["Authorization"];
   }

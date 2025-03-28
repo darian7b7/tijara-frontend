@@ -49,9 +49,21 @@ apiClient.interceptors.request.use(
     }
 
     const tokens = JSON.parse(localStorage.getItem("auth_tokens") || "null");
+    
+    // Debug token presence
+    console.log("🔐 Request Authorization:", {
+      hasTokens: !!tokens,
+      hasAuthHeader: !!config.headers.Authorization,
+      url: config.url
+    });
+
     if (tokens?.accessToken) {
       config.headers.Authorization = `Bearer ${tokens.accessToken}`;
+    } else {
+      // Remove header if no token (important after logout)
+      delete config.headers.Authorization;
     }
+    
     return config;
   },
   (error) => {
