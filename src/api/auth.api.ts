@@ -167,14 +167,14 @@ export class AuthAPI {
   static async signup(
     email: string,
     password: string,
-    name: string,
+    username: string
   ): Promise<APIResponse<AuthResponse>> {
     try {
-      console.log("Sending signup request:", { email });
+      console.log("Sending signup request:", { email, username });
       const response = await apiClient.post<APIResponse<AuthResponse>>('/auth/register', {
         email,
         password,
-        name,
+        username
       });
       console.log("Signup response:", response.data);
       if (response.data.data?.tokens) {
@@ -190,8 +190,8 @@ export class AuthAPI {
       return {
         success: false,
         error: error.response?.data?.message || 'Registration failed',
-        status: error.response?.status || 500,
-        data: null
+        errors: error.response?.data?.errors,
+        status: error.response?.status || 500
       };
     }
   }

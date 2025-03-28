@@ -16,7 +16,7 @@ export interface LoginRequest {
 export interface SignupRequest {
   email: string;
   password: string;
-  name: string;
+  username: string;
 }
 
 export interface AuthTokens {
@@ -56,7 +56,7 @@ export interface AuthContextType extends AuthState {
   signup: (
     email: string,
     password: string,
-    name: string,
+    username: string,
   ) => Promise<AuthResponse>;
   logout: () => Promise<void>;
   clearError: () => void;
