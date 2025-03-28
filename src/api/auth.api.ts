@@ -139,24 +139,13 @@ export class AuthAPI {
         password: data.password
       });
       
-      console.log("✅ Login response:", {
-        success: response.data.success,
-        hasUser: !!response.data.data?.user,
-        hasTokens: !!response.data.data?.tokens
-      });
-
       if (response.data.success && response.data.data?.tokens) {
         TokenManager.setTokens(response.data.data.tokens);
       }
       
       return response.data;
     } catch (error: any) {
-      console.error("❌ Login request failed:", {
-        status: error?.response?.status,
-        data: error?.response?.data,
-        message: error?.message
-      });
-      
+      console.error("❌ Login failed:", error?.response?.data?.message || "Unknown error");
       throw {
         success: false,
         error: {

@@ -2,6 +2,9 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { API_BASE_URL } from "@/config";
 
+// Add request tracking to prevent duplicate requests
+const pendingRequests = new Map();
+
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
@@ -21,15 +24,32 @@ const ROUTES = {
   notifications: "/api/notifications",
 };
 
+// Helper to generate request key
+const getRequestKey = (config: any) => {
+  return `${config.method}:${config.url}:${JSON.stringify(config.params || {})}`;
+};
+
 // Simplified request interceptor
 apiClient.interceptors.request.use(
   (config) => {
-    // Log the request details
-    console.log('🚀 Original Request:', {
-      method: config.method?.toUpperCase(),
-      url: config.url,
-      baseURL: config.baseURL,
-    });
+    const requestKey = getRequestKey(config);
+    
+    // Only log if it's not a duplicate request within 1 second
+    if (!pendingRequests.has(requestKey)) {
+      console.log('🚀 Request:', {
+        method: config.method?.toUpperCase(),
+        url: config.url,
+        params: config.params,
+      });
+      
+      // Track this request
+      pendingRequests.set(requestKey, Date.now());
+      
+      // Clean up old requests after 1 second
+      setTimeout(() => {
+        pendingRequests.delete(requestKey);
+      }, 1000);
+    }
 
     // Handle auth routes
     if (config.url === "/login") {
@@ -39,9 +59,6 @@ apiClient.interceptors.request.use(
     } else if (config.url === "/listings") {
       config.url = "/api/listings";
     }
-
-    // Log the final URL
-    console.log('🔗 Final URL:', `${config.baseURL}${config.url}`);
 
     // Add token to request
     const tokens = JSON.parse(localStorage.getItem("auth_tokens") || "null");
@@ -62,20 +79,31 @@ apiClient.interceptors.request.use(
 // Add response logging
 apiClient.interceptors.response.use(
   (response) => {
-    console.log('✅ API Response:', {
-      status: response.status,
-      url: response.config.url,
-      data: response.data,
-    });
+    const requestKey = getRequestKey(response.config);
+    
+    // Only log if it's not a duplicate response
+    if (pendingRequests.has(requestKey)) {
+      console.log('✅ Response:', {
+        status: response.status,
+        url: response.config.url,
+        // Only log length of data arrays to prevent console spam
+        data: Array.isArray(response.data) 
+          ? `Array(${response.data.length} items)` 
+          : response.data,
+      });
+    }
     return response;
   },
   (error) => {
-    console.error('❌ API Error:', {
-      status: error?.response?.status,
-      url: error?.config?.url,
-      data: error?.response?.data,
-      message: error?.message,
-    });
+    // Only log unique errors
+    const requestKey = getRequestKey(error.config);
+    if (pendingRequests.has(requestKey)) {
+      console.error('❌ Error:', {
+        status: error?.response?.status,
+        url: error?.config?.url,
+        message: error?.message,
+      });
+    }
 
     if (!error.response) {
       toast.error("Cannot connect to server. Please check your internet connection.");
