@@ -11,7 +11,7 @@ const apiClient = axios.create({
   withCredentials: true,
 });
 
-// Define route prefixes WITHOUT /api
+// Define routes WITHOUT /api prefix since it's in the baseURL
 const ROUTES = {
   auth: "/auth",
   listings: "/listings",
@@ -21,33 +21,21 @@ const ROUTES = {
   notifications: "/notifications",
 };
 
-// Update request interceptor
+// Simplified request interceptor
 apiClient.interceptors.request.use(
   (config) => {
-    // Log the request details before URL modification
+    // Log the request details
     console.log('🚀 Original Request:', {
       method: config.method?.toUpperCase(),
       url: config.url,
       baseURL: config.baseURL,
     });
 
-    // Handle the specific route prefixes WITHOUT adding /api
-    if (config.url?.startsWith("/auth")) {
-      config.url = config.url; // No modification needed
-    } else if (config.url?.startsWith("/login")) {
-      config.url = "/auth/login"; // Fix login path
-    } else if (config.url?.startsWith("/register")) {
-      config.url = "/auth/register"; // Fix register path
-    } else if (config.url?.startsWith("/listings")) {
-      config.url = ROUTES.listings + config.url.replace("/listings", "");
-    } else if (config.url?.startsWith("/users")) {
-      config.url = ROUTES.users + config.url.replace("/users", "");
-    } else if (config.url?.startsWith("/messages")) {
-      config.url = ROUTES.messages + config.url.replace("/messages", "");
-    } else if (config.url?.startsWith("/uploads")) {
-      config.url = ROUTES.uploads + config.url.replace("/uploads", "");
-    } else if (config.url?.startsWith("/notifications")) {
-      config.url = ROUTES.notifications + config.url.replace("/notifications", "");
+    // Handle auth routes
+    if (config.url === "/login") {
+      config.url = "/auth/login";
+    } else if (config.url === "/register") {
+      config.url = "/auth/register";
     }
 
     // Log the final URL
@@ -58,7 +46,6 @@ apiClient.interceptors.request.use(
     if (tokens?.accessToken) {
       config.headers.Authorization = `Bearer ${tokens.accessToken}`;
     } else {
-      // Remove header if no token (important after logout)
       delete config.headers.Authorization;
     }
     
@@ -67,7 +54,7 @@ apiClient.interceptors.request.use(
   (error) => {
     console.error("❌ Request error:", error);
     return Promise.reject(error);
-  },
+  }
 );
 
 // Add response logging

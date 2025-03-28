@@ -132,15 +132,14 @@ export class AuthAPI {
 
   static async login(data: LoginRequest): Promise<AuthResponse> {
     try {
-      console.log("Sending login request:", { email: data.email });
+      console.log("🔑 Login attempt:", { email: data.email });
       
-      // Use the correct auth endpoint
       const response = await apiClient.post<AuthResponse>("/auth/login", {
         email: data.email,
         password: data.password
       });
       
-      console.log("Login response:", {
+      console.log("✅ Login response:", {
         success: response.data.success,
         hasUser: !!response.data.data?.user,
         hasTokens: !!response.data.data?.tokens
@@ -152,7 +151,7 @@ export class AuthAPI {
       
       return response.data;
     } catch (error: any) {
-      console.error("Login request failed:", {
+      console.error("❌ Login request failed:", {
         status: error?.response?.status,
         data: error?.response?.data,
         message: error?.message
