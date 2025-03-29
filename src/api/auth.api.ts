@@ -20,7 +20,7 @@ export class AuthAPI {
 
   static async login(data: LoginRequest): Promise<AuthResponse> {
     try {
-      const response = await apiClient.post<AuthResponse>("/auth/login", data);
+      const response = await apiClient.post<AuthResponse>("/api/auth/login", data);
       
       if (response.data.success && response.data.data?.tokens) {
         TokenManager.setTokens(response.data.data.tokens);
@@ -35,7 +35,7 @@ export class AuthAPI {
   static async signup(data: SignupRequest): Promise<AuthResponse> {
     try {
       console.log(" Attempting signup:", { email: data.email, username: data.username });
-      const response = await apiClient.post<AuthResponse>("/auth/register", data);
+      const response = await apiClient.post<AuthResponse>("/api/auth/register", data);
       
       if (response.data.success && response.data.data?.tokens) {
         TokenManager.setTokens(response.data.data.tokens);

@@ -30,8 +30,8 @@ const Routes = (): JSX.Element => {
           </PrivateRoute>
         }
       />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      <Route path="/api/auth/login" element={<Login />} />
+      <Route path="/api/auth/register" element={<Register />} />
       <Route
         path="/search"
         element={
