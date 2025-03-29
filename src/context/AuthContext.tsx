@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AuthAPI, TokenManager } from "@/api/auth.api";
+import { AuthAPI } from "@/api/auth.api";
+import { TokenManager } from "@/utils/TokenManager";
 import type { AuthState, AuthContextType, AuthResponse, AuthError } from "@/types/auth";
 import { toast } from "react-toastify";
 

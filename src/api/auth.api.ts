@@ -1,14 +1,12 @@
 import apiClient from "./apiClient";
-import { TokenManager } from "@/utils/TokenManager";
 import type { 
-  UserSettings,
-  User,
   AuthResponse,
   SignupRequest,
   LoginRequest,
   APIResponse,
   AuthError,
 } from "@/types/auth";
+import { TokenManager } from "@/utils/TokenManager";
 
 export class AuthAPI {
   private static handleError(error: any): never {
@@ -68,29 +66,11 @@ export class AuthAPI {
     }
   }
 
-  static async updateProfile(data: Partial<User>): Promise<AuthResponse> {
-    try {
-      const response = await apiClient.put<AuthResponse>("/auth/profile", data);
-      return response.data;
-    } catch (error: any) {
-      return this.handleError(error);
-    }
-  }
-
-  static async updateSettings(data: Partial<UserSettings>): Promise<AuthResponse> {
-    try {
-      const response = await apiClient.put<AuthResponse>("/auth/settings", data);
-      return response.data;
-    } catch (error: any) {
-      return this.handleError(error);
-    }
-  }
-
   static async refreshToken(): Promise<AuthResponse> {
     try {
       const tokens = TokenManager.getStoredTokens();
       if (!tokens?.refreshToken) {
-        return this.handleError({
+        throw {
           response: {
             data: {
               error: {
@@ -99,7 +79,7 @@ export class AuthAPI {
               }
             }
           }
-        });
+        };
       }
 
       const response = await apiClient.post<AuthResponse>("/auth/refresh", {
@@ -117,5 +97,3 @@ export class AuthAPI {
     }
   }
 }
-
-export { TokenManager };

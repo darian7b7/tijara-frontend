@@ -1,7 +1,7 @@
 import axios from "axios";
 import { toast } from "react-toastify";
 import { API_BASE_URL } from "@/config";
-import { TokenManager } from "./auth.api";
+import { TokenManager } from "@/utils/TokenManager";
 import type { AuthTokens } from "@/types/auth";
 
 // Add request tracking to prevent duplicate requests
