@@ -48,4 +48,16 @@ export class UserAPI {
       return this.handleError(error);
     }
   }
+
+  static async changePassword(currentPassword: string, newPassword: string): Promise<APIResponse<void>> {
+    try {
+      const response = await apiClient.put<APIResponse<void>>("/users/password", {
+        currentPassword,
+        newPassword
+      });
+      return response.data;
+    } catch (error: any) {
+      return this.handleError(error);
+    }
+  }
 }

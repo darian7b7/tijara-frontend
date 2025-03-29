@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { UserAPI } from "@/api/auth.api";
+import { UserAPI } from "@/api/user.api";
 import { toast } from "react-toastify";
 
 interface FormData {
@@ -37,12 +37,12 @@ export const ChangePassword = () => {
     setLoading(true);
 
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append("currentPassword", formData.currentPassword);
-      formDataToSend.append("newPassword", formData.newPassword);
-
-      const response = await UserAPI.updateProfile(formDataToSend);
-      if (response.data) {
+      const response = await UserAPI.changePassword(
+        formData.currentPassword,
+        formData.newPassword
+      );
+      
+      if (response.success) {
         toast.success(t("profile.password_updated"));
         setFormData({
           currentPassword: "",
@@ -50,10 +50,8 @@ export const ChangePassword = () => {
           confirmPassword: "",
         });
       }
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : t("profile.update_error");
-      toast.error(errorMessage);
+    } catch (error: any) {
+      toast.error(error.message || t("profile.update_failed"));
     } finally {
       setLoading(false);
     }
