@@ -58,7 +58,7 @@ const refreshAuthToken = async (): Promise<AuthTokens | null> => {
             throw new Error("No refresh token available");
           }
 
-          const response = await apiClient.post("/auth/refresh", {
+          const response = await apiClient.post("/api/auth/refresh", {
             refreshToken: tokens.refreshToken
           });
 
@@ -167,7 +167,7 @@ apiClient.interceptors.response.use(
         }
       } catch (refreshError) {
         // If refresh fails, redirect to login
-        window.location.href = "/login?error=session_expired";
+        window.location.href = "/api/auth/login?error=session_expired";
         return Promise.reject(error);
       }
     }
