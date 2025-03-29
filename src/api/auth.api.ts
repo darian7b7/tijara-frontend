@@ -54,7 +54,6 @@ export class AuthAPI {
       TokenManager.clearTokens();
       return response.data;
     } catch (error: any) {
-      TokenManager.clearTokens();
       return this.handleError(error);
     }
   }
@@ -68,20 +67,12 @@ export class AuthAPI {
     }
   }
 
-  static async refreshToken(): Promise<AuthResponse> {
+  static async refreshToken(): Promise<AuthResponse | null> {
     try {
       const tokens = TokenManager.getStoredTokens();
       if (!tokens?.refreshToken) {
-        throw {
-          response: {
-            data: {
-              error: {
-                code: "NO_REFRESH_TOKEN",
-                message: "No refresh token available"
-              }
-            }
-          }
-        };
+        console.error("No refresh token available");
+        return null;
       }
 
       const response = await apiClient.post<AuthResponse>("/auth/refresh", {
@@ -94,8 +85,9 @@ export class AuthAPI {
 
       return response.data;
     } catch (error: any) {
+      console.error("Token refresh failed:", error);
       TokenManager.clearTokens();
-      return this.handleError(error);
+      return null;
     }
   }
 }
