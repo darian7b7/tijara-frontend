@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslation } from "react-i18next";
-import { UserAPI } from "@/api/auth.api";
+import { UserAPI } from "@/api/user.api";
 import type { UserProfile, UserSettings, UserPreferences } from "@/types/user";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { toast } from "react-toastify";
