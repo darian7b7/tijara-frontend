@@ -50,7 +50,7 @@ export class AuthAPI {
 
   static async logout(): Promise<APIResponse<void>> {
     try {
-      const response = await apiClient.post<APIResponse<void>>("/auth/logout");
+      const response = await apiClient.post<APIResponse<void>>("/api/auth/logout");
       TokenManager.clearTokens();
       return response.data;
     } catch (error: any) {
@@ -61,7 +61,7 @@ export class AuthAPI {
 
   static async getCurrentUser(): Promise<AuthResponse> {
     try {
-      const response = await apiClient.get<AuthResponse>("/auth/me");
+      const response = await apiClient.get<AuthResponse>("/api/auth/me");
       return response.data;
     } catch (error: any) {
       return this.handleError(error);
@@ -84,7 +84,7 @@ export class AuthAPI {
         };
       }
 
-      const response = await apiClient.post<AuthResponse>("/auth/refresh", {
+      const response = await apiClient.post<AuthResponse>("/api/auth/refresh", {
         refreshToken: tokens.refreshToken
       });
 
