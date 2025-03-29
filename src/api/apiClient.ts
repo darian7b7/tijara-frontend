@@ -10,11 +10,11 @@ const pendingRequests = new Map();
 // Create API client
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 15000, // Increased timeout
+  timeout: 15000,
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: false, // Changed to false since we're using token auth
+  withCredentials: true, // Enable credentials for auth
 });
 
 // Define routes
@@ -85,12 +85,11 @@ const refreshAuthToken = async (): Promise<AuthTokens | null> => {
   }
 };
 
-// Simplified request interceptor
+// Request interceptor
 apiClient.interceptors.request.use(
   async (config) => {
     const requestKey = getRequestKey(config);
     
-    // Only log if it's not a duplicate request within 2 seconds
     if (!pendingRequests.has(requestKey)) {
       console.log('🚀 Request:', {
         method: config.method?.toUpperCase(),
@@ -98,10 +97,8 @@ apiClient.interceptors.request.use(
         params: config.params,
       });
       
-      // Track this request
       pendingRequests.set(requestKey, Date.now());
       
-      // Clean up old requests after 2 seconds
       setTimeout(() => {
         pendingRequests.delete(requestKey);
       }, 2000);
@@ -122,24 +119,18 @@ apiClient.interceptors.request.use(
     
     return config;
   },
-  (error) => {
-    console.error("❌ Request error:", error);
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Add response logging and error handling
+// Response interceptor
 apiClient.interceptors.response.use(
   (response) => {
     const requestKey = getRequestKey(response.config);
-    
     if (pendingRequests.has(requestKey)) {
       console.log('✅ Response:', {
         status: response.status,
         url: response.config.url,
-        data: Array.isArray(response.data) 
-          ? `Array(${response.data.length} items)` 
-          : response.data,
+        data: response.data
       });
     }
     return response;
