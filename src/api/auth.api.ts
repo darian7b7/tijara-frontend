@@ -34,7 +34,8 @@ export class AuthAPI {
 
   static async signup(data: SignupRequest): Promise<AuthResponse> {
     try {
-      const response = await apiClient.post<AuthResponse>("/auth/signup", data);
+      console.log(" Attempting signup:", { email: data.email, username: data.username });
+      const response = await apiClient.post<AuthResponse>("/auth/register", data);
       
       if (response.data.success && response.data.data?.tokens) {
         TokenManager.setTokens(response.data.data.tokens);
@@ -42,6 +43,7 @@ export class AuthAPI {
       
       return response.data;
     } catch (error: any) {
+      console.error(" Signup error:", error);
       return this.handleError(error);
     }
   }
