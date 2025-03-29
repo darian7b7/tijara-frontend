@@ -1,5 +1,5 @@
 // API Configuration
-export const API_BASE_URL = "https://tijara-backend-production.up.railway.app";
+export const API_BASE_URL = "https://tijara-backend-production.up.railway.app/api";
 
 // Auth Configuration
 export const AUTH_TOKEN_KEY = "auth_tokens";
