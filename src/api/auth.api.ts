@@ -20,7 +20,7 @@ export class AuthAPI {
 
   static async login(data: LoginRequest): Promise<AuthResponse> {
     try {
-      const response = await apiClient.post<AuthResponse>("/api/auth/login", data);
+      const response = await apiClient.post<AuthResponse>("/auth/login", data);
       
       if (response.data.success && response.data.data?.tokens) {
         TokenManager.setTokens(response.data.data.tokens);
@@ -35,7 +35,7 @@ export class AuthAPI {
   static async signup(data: SignupRequest): Promise<AuthResponse> {
     try {
       console.log(" Attempting signup:", { email: data.email, username: data.username });
-      const response = await apiClient.post<AuthResponse>("/api/auth/register", data);
+      const response = await apiClient.post<AuthResponse>("/auth/register", data);
       
       if (response.data.success && response.data.data?.tokens) {
         TokenManager.setTokens(response.data.data.tokens);
@@ -50,7 +50,7 @@ export class AuthAPI {
 
   static async logout(): Promise<APIResponse<void>> {
     try {
-      const response = await apiClient.post<APIResponse<void>>("/api/auth/logout");
+      const response = await apiClient.post<APIResponse<void>>("/auth/logout");
       TokenManager.clearTokens();
       return response.data;
     } catch (error: any) {
@@ -61,7 +61,7 @@ export class AuthAPI {
 
   static async getCurrentUser(): Promise<AuthResponse> {
     try {
-      const response = await apiClient.get<AuthResponse>("/api/auth/me");
+      const response = await apiClient.get<AuthResponse>("/auth/me");
       return response.data;
     } catch (error: any) {
       return this.handleError(error);
@@ -84,7 +84,7 @@ export class AuthAPI {
         };
       }
 
-      const response = await apiClient.post<AuthResponse>("/api/auth/refresh", {
+      const response = await apiClient.post<AuthResponse>("/auth/refresh", {
         refreshToken: tokens.refreshToken
       });
 
