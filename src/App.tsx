@@ -6,13 +6,13 @@ import {
   ListingsProvider,
   FavoritesProvider,
 } from "@/context";
-import { TokenManager } from "@/api/auth.api";
+import { TokenManager } from "@/utils/TokenManager";
 import AppRoutes from "./routes/Routes";
 
 const App: () => ReactElement = () => {
   useEffect(() => {
     // Initialize authentication on app start
-    TokenManager.initialize().catch(console.error);
+    TokenManager.initialize();
   }, []);
 
   return (
